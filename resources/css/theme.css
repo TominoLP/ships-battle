@@ -1,0 +1,105 @@
+
+
+/* Enable class-based dark mode utilities like `dark:bg-*` */
+@custom-variant dark (&:is(.dark, .dark *));
+
+/* ── Light theme tokens ───────────────────────────────────────────── */
+@theme {
+    /* Sizing / radius */
+    --font-size: 16px;
+    --radius: 0.625rem;
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
+
+    /* Core palette (light) */
+    --color-background: #ffffff;
+    --color-foreground: oklch(0.145 0 0);
+    --color-card: #ffffff;
+    --color-card-foreground: oklch(0.145 0 0);
+    --color-popover: oklch(1 0 0);
+    --color-popover-foreground: oklch(0.145 0 0);
+    --color-primary: #030213;
+    --color-primary-foreground: oklch(1 0 0);
+    --color-secondary: oklch(0.95 0.0058 264.53);
+    --color-secondary-foreground: #030213;
+    --color-muted: #ececf0;
+    --color-muted-foreground: #717182;
+    --color-accent: #e9ebef;
+    --color-accent-foreground: #030213;
+    --color-destructive: #d4183d;
+    --color-destructive-foreground: #ffffff;
+    --color-border: rgba(0, 0, 0, 0.1);
+    --color-input: transparent;
+    --color-input-background: #f3f3f5;
+    --color-switch-background: #cbced4;
+    --color-ring: oklch(0.708 0 0);
+
+    /* Optional charts */
+    --color-chart-1: oklch(0.646 0.222 41.116);
+    --color-chart-2: oklch(0.6 0.118 184.704);
+    --color-chart-3: oklch(0.398 0.07 227.392);
+    --color-chart-4: oklch(0.828 0.189 84.429);
+    --color-chart-5: oklch(0.769 0.188 70.08);
+
+    /* Sidebar (optional) */
+    --color-sidebar: oklch(0.985 0 0);
+    --color-sidebar-foreground: oklch(0.145 0 0);
+    --color-sidebar-primary: #030213;
+    --color-sidebar-primary-foreground: oklch(0.985 0 0);
+    --color-sidebar-accent: oklch(0.97 0 0);
+    --color-sidebar-accent-foreground: oklch(0.205 0 0);
+    --color-sidebar-border: oklch(0.922 0 0);
+    --color-sidebar-ring: oklch(0.708 0 0);
+}
+
+/* ── Dark theme tokens (overrides) ────────────────────────────────── */
+.dark { @theme {
+    --color-background: oklch(0.145 0 0);
+    --color-foreground: oklch(0.985 0 0);
+    --color-card: oklch(0.145 0 0);
+    --color-card-foreground: oklch(0.985 0 0);
+    --color-popover: oklch(0.145 0 0);
+    --color-popover-foreground: oklch(0.985 0 0);
+    --color-primary: oklch(0.985 0 0);
+    --color-primary-foreground: oklch(0.205 0 0);
+    --color-secondary: oklch(0.269 0 0);
+    --color-secondary-foreground: oklch(0.985 0 0);
+    --color-muted: oklch(0.269 0 0);
+    --color-muted-foreground: oklch(0.708 0 0);
+    --color-accent: oklch(0.269 0 0);
+    --color-accent-foreground: oklch(0.985 0 0);
+    --color-destructive: oklch(0.396 0.141 25.723);
+    --color-destructive-foreground: oklch(0.637 0.237 25.331);
+    --color-border: oklch(0.269 0 0);
+    --color-input: oklch(0.269 0 0);
+    --color-ring: oklch(0.439 0 0);
+
+    --color-sidebar: oklch(0.205 0 0);
+    --color-sidebar-foreground: oklch(0.985 0 0);
+    --color-sidebar-primary: oklch(0.488 0.243 264.376);
+    --color-sidebar-primary-foreground: oklch(0.985 0 0);
+    --color-sidebar-accent: oklch(0.269 0 0);
+    --color-sidebar-accent-foreground: oklch(0.985 0 0);
+    --color-sidebar-border: oklch(0.269 0 0);
+    --color-sidebar-ring: oklch(0.439 0 0);
+}}
+
+/* ── Base resets / defaults ───────────────────────────────────────── */
+@layer base {
+    :root { font-size: var(--font-size); }
+
+    /* Give everything a consistent default border color utility */
+    *, *::before, *::after { @apply border-border; }
+
+    /* Use token utilities for body */
+    body { @apply bg-background text-foreground; }
+
+    /* Simple typography defaults (kept minimal; no :has/:where) */
+    h1 { @apply text-2xl font-medium leading-relaxed; }
+    h2 { @apply text-xl  font-medium leading-relaxed; }
+    h3 { @apply text-lg  font-medium leading-relaxed; }
+    h4 { @apply text-base font-medium leading-relaxed; }
+    p, label, button, input { @apply text-base leading-relaxed; }
+}
