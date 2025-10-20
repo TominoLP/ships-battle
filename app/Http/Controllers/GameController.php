@@ -164,11 +164,40 @@ class GameController extends Controller
             'y'         => 'required|integer|min:0|max:11',
         ]);
 
-        $payload = DB::transaction(function () use ($request) {
+        // small helpers (pure array ops)
+        $isShipCell = static function(array $board, int $x, int $y): bool {
+            return isset($board[$y][$x]) && ($board[$y][$x] === 1 || $board[$y][$x] === 2);
+        };
+        $collectShipSpan = static function(array $board, int $x, int $y) use ($isShipCell): array {
+            // Determine axis by looking at neighbors
+            $horiz = $isShipCell($board, $x - 1, $y) || $isShipCell($board, $x + 1, $y);
+            $vert  = $isShipCell($board, $x, $y - 1) || $isShipCell($board, $x, $y + 1);
+
+            $cells = [[$x, $y]];
+
+            if ($horiz) {
+                // left
+                $cx = $x - 1;
+                while ($isShipCell($board, $cx, $y)) { $cells[] = [$cx, $y]; $cx--; }
+                // right
+                $cx = $x + 1;
+                while ($isShipCell($board, $cx, $y)) { $cells[] = [$cx, $y]; $cx++; }
+            } elseif ($vert) {
+                // up
+                $cy = $y - 1;
+                while ($isShipCell($board, $x, $cy)) { $cells[] = [$x, $cy]; $cy--; }
+                // down
+                $cy = $y + 1;
+                while ($isShipCell($board, $x, $cy)) { $cells[] = [$x, $cy]; $cy++; }
+            }
+            // single-cell ships would just be the cell itself
+            return $cells;
+        };
+
+        $payload = DB::transaction(function () use ($request, $isShipCell, $collectShipSpan) {
             /** @var Player $player */
             $player = \App\Models\Player::lockForUpdate()->findOrFail($request->player_id);
 
-            // Lock the opponent row too (prevents both shooting at the same time)
             /** @var Player|null $enemy */
             $enemy = \App\Models\Player::where('game_id', $player->game_id)
                 ->where('id', '<>', $player->id)
@@ -179,50 +208,70 @@ class GameController extends Controller
                 return response()->json(['error' => 'No enemy yet'], 400);
             }
 
-            // Enforce turn
             if (!$player->is_turn) {
                 return response()->json(['error' => 'Not your turn'], 409);
             }
 
-            // Resolve shot against enemy board
             $x = (int) $request->x;
             $y = (int) $request->y;
 
-            $board = $enemy->board; // cast to array via $casts on model
+            $board = $enemy->board; // array (cast on model)
             $cell  = $board[$y][$x] ?? 0;
 
-            // 0 empty, 1 ship, 2 hit, 3 miss, 4 used/whatever
+            // 0 empty, 1 ship, 2 hit, 3 miss
             $result = match ($cell) {
                 0 => 'miss',
                 1 => 'hit',
-                2, 3, 4 => 'already',
+                2, 3 => 'already',
                 default => 'miss',
             };
 
+            $sunkInfo = null;
+
             if ($result === 'hit') {
-                // Mark hit
+                // mark the hit
                 $board[$y][$x] = 2;
                 $enemy->update(['board' => $board]);
+
+                // check if the entire ship is now sunk
+                $spanCells = $collectShipSpan($board, $x, $y);
+                $anyUndamaged = false;
+                foreach ($spanCells as [$cx, $cy]) {
+                    if (($board[$cy][$cx] ?? 0) === 1) { $anyUndamaged = true; break; }
+                }
+                if (!$anyUndamaged) {
+                    // the ship spanning through (x,y) is fully destroyed
+                    $result = 'sunk';
+                    $sunkInfo = [
+                        'size'  => count($spanCells),
+                        'cells' => $spanCells, // [[x,y], ...]
+                    ];
+                }
             } elseif ($result === 'miss') {
-                // Mark water so we don't shoot again
                 $board[$y][$x] = 3;
                 $enemy->update(['board' => $board]);
             }
 
-            // Record move
+            // record move
             \App\Models\Move::create([
                 'game_id'   => $player->game_id,
                 'player_id' => $player->id,
                 'x'         => $x,
                 'y'         => $y,
-                'result'    => $result,
+                'result'    => $result, // now can be 'sunk'
             ]);
 
-            // Check game over: no ships (1) left on enemy board
-            $gameOver = !collect($enemy->board)->flatten()->contains(1);
-
-            // Broadcast the shot first (order matters for clients)
+            // broadcast shot first
             broadcast(new \App\Events\ShotFired($player, $x, $y, $result));
+
+            // if we sunk something, emit ShipSunk now
+            if ($sunkInfo) {
+                // you can change the signature to whatever your event expects
+                broadcast(new \App\Events\ShipSunk($player, $sunkInfo['size'], $sunkInfo['cells']));
+            }
+
+            // check for game over using the updated $board
+            $gameOver = !collect($board)->flatten()->contains(1);
 
             if ($gameOver) {
                 $player->update(['is_turn' => false]);
@@ -230,11 +279,11 @@ class GameController extends Controller
 
                 $game = $player->game()->lockForUpdate()->first();
                 $game->update([
-                    'status'            => \App\Models\Game::STATUS_COMPLETED,
-                    'winner_player_id'  => $player->id,
+                    'status'           => \App\Models\Game::STATUS_COMPLETED,
+                    'winner_player_id' => $player->id,
                 ]);
 
-                broadcast(new GameFinished($game, $player));
+                broadcast(new \App\Events\GameFinished($game, $player));
 
                 return response()->json([
                     'result'   => $result,
@@ -243,26 +292,24 @@ class GameController extends Controller
                 ]);
             }
 
-            // Turn handling:
-            // - On MISS: swap turn.
-            // - On HIT or ALREADY: keep same player's turn (no TurnChanged event).
+            // turn handling
             if ($result === 'miss') {
                 $player->update(['is_turn' => false]);
                 $enemy->update(['is_turn' => true]);
-
                 broadcast(new \App\Events\TurnChanged($player->game, $enemy));
             }
 
             return [
-                'result'   => $result,
+                'result'   => $result,   // 'hit' | 'miss' | 'already' | 'sunk'
                 'gameOver' => false,
             ];
         });
 
         if ($payload instanceof \Illuminate\Http\JsonResponse) {
-            return $payload; // early 400/409 or finished response
+            return $payload;
         }
 
         return response()->json($payload);
     }
+
 }

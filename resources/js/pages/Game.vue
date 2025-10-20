@@ -9,3 +9,7 @@ import GameApp from '@/src/App.vue'
 <template>
   <GameApp />
 </template>
+ 
+<style scoped>
+
+</style>

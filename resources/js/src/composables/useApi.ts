@@ -1,23 +1,27 @@
-import axios from 'axios';
+import GameController from '@/actions/App/Http/Controllers/GameController'
+import type { CreateGameResponse, JoinGameResponse, PlaceShipsResponse, ShootResponse, PlacedShip } from '@/src/types'
 
-export const api = axios.create({ baseURL: '/api' });
+type WayfinderCall = { url: string; method: string }
+type JsonBody = Record<string, unknown> | undefined
 
-export async function apiCreateGame(name: string) {
-    const { data } = await api.post('/game/create', { name });
-    return data as { game_code: string; game_id: number; player_id: number };
-}
-
-export async function apiJoinGame(name: string, code: string) {
-    const { data } = await api.post('/game/join', { name, code });
-    return data as { game_id: number; player_id: number };
-}
-
-export async function apiPlaceShips(player_id: number, ships: any) {
-    const { data } = await api.post('/game/place-ships', { player_id, ships });
-    return data as { started: boolean };
-}
-
-export async function apiShoot(player_id: number, x: number, y: number) {
-    const { data } = await api.post('/game/shoot', { player_id, x, y });
-    return data as { result: 'hit' | 'miss' | 'sunk' };
+export async function api<T = unknown>(call: WayfinderCall, body?: JsonBody, init?: RequestInit): Promise<T> {
+  const method = call.method?.toUpperCase?.() ?? 'GET'
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
+    ...init?.headers,
+  }
+  const res = await fetch(call.url, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+    credentials: 'same-origin',
+    ...init,
+  })
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw Object.assign(new Error(`HTTP ${res.status}: ${text || res.statusText}`), { response: res })
+  }
+  try { return await res.json() as T } catch { return undefined as T }
 }

@@ -1,22 +1,31 @@
 <script setup lang="ts">
-defineProps<{ enemyBoard: number[][]; disabled?: boolean }>()
-defineEmits(['fire'])
+
+import BaseBoard from '@/src/components/BaseBoard.vue';
+
+const props = defineProps<{ enemyBoard: number[][]; disabled?: boolean }>()
+const emit = defineEmits<{ (e: 'fire', x: number, y: number): void }>()
+
+function getCellClass(cell: number, x: number, y: number) {
+  if (cell === 1) return 'bg-slate-700'
+  if (cell === 2) return 'bg-red-600/80'
+  if (cell === 0)
+    return props.disabled
+      ? 'bg-slate-800/50'
+      : 'bg-slate-800/50 hover:bg-red-950/30 cursor-pointer'
+  return 'cursor-default'
+}
+
+function handleClick(x: number, y: number, cell: number) {
+  if (props.disabled || cell !== 0) return
+  emit('fire', x, y)
+}
 </script>
 
 <template>
-  <div class="grid grid-cols-12 justify-center mx-auto w-fit select-none p-3 rounded-xl bg-slate-950/40 border border-slate-700 gap-[3px]">
-    <div v-for="(row, y) in enemyBoard" :key="y" class="contents">
-      <div
-          v-for="(cell, x) in row"
-          :key="x"
-          class="w-8 h-8 sm:w-9 sm:h-9 border border-slate-700 rounded-[6px] cursor-pointer transition"
-          :class="{
-          'bg-slate-700': cell === 1,     // miss
-          'bg-red-600/80': cell === 2,    // hit
-          'bg-slate-800/50 hover:bg-red-950/30': cell === 0
-        }"
-          @click="!disabled && $emit('fire', x, y)"
-      />
-    </div>
-  </div>
+  <BaseBoard
+    :board="enemyBoard"
+    :getCellClass="getCellClass"
+    :onCellClick="handleClick"
+    showHint="Klicke auf ein Feld, um zu schießen."
+  />
 </template>
