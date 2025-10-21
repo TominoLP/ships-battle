@@ -55,7 +55,7 @@ class Game extends Model
         static $badWords = ['ass', 'sex', 'fuk', 'pis', 'cum', 'dck', 'cnt', 'tit', 'gay', 'wtf', 'fag',];
         
         do {
-            $code = Str::lower(Str::random(6));
+            $code = Str::upper(Str::random(6));
             $containsBadWord = collect($badWords)->contains(fn($word) =>
                 str_contains(Str::lower($code), $word)
             );

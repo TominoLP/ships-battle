@@ -1,3 +1,6 @@
+# =========================================================
+# Dockerfile for dev environment - PHP-FPM with Composer (docker compose up)
+# =========================================================
 FROM php:8.3-fpm
 
 # 1. Install system dependencies as root

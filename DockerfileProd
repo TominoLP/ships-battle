@@ -70,89 +70,18 @@ RUN mkdir -p storage/framework/{sessions,views,cache} \
 # =========================================================
 # Nginx Configuration
 # =========================================================
-RUN rm -f /etc/nginx/http.d/default.conf && cat > /etc/nginx/http.d/laravel.conf <<'NGINX'
-server {
-    listen 80;
-    server_name _;
-
-    root /var/www/html/public;
-    index index.php;
-
-    access_log /var/log/nginx/access.log;
-    error_log /var/log/nginx/error.log;
-
-    location /build/ {
-        try_files $uri =404;
-        access_log off;
-        expires 7d;
-    }
-
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-
-    location ~ \.php$ {
-        include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
-        fastcgi_param DOCUMENT_ROOT $realpath_root;
-        fastcgi_pass 127.0.0.1:9000;
-    }
-
-    # Reverb WebSocket proxy
-    location /app/reverb {
-        proxy_pass         http://127.0.0.1:8080;
-        proxy_http_version 1.1;
-        proxy_set_header   Upgrade $http_upgrade;
-        proxy_set_header   Connection "Upgrade";
-        proxy_set_header   Host $host;
-        proxy_read_timeout 60s;
-    }
-}
-NGINX
+RUN rm -f /etc/nginx/http.d/default.conf
+COPY docker/nginx.conf /etc/nginx/http.d/laravel.conf
 
 # =========================================================
-# Supervisor (FPM + Nginx + Reverb)
+# Supervisor Configuration
 # =========================================================
-RUN mkdir -p /etc/supervisor/conf.d && cat > /etc/supervisor/conf.d/supervisord.conf <<'SUPERVISOR'
-[supervisord]
-nodaemon=true
-logfile=/dev/null
-logfile_maxbytes=0
-
-[program:php-fpm]
-command=/usr/local/sbin/php-fpm -F
-autostart=true
-autorestart=true
-stdout_logfile=/dev/stdout
-stdout_logfile_maxbytes=0
-stderr_logfile=/dev/stderr
-stderr_logfile_maxbytes=0
-
-[program:nginx]
-command=/usr/sbin/nginx -g "daemon off;"
-autostart=true
-autorestart=true
-stdout_logfile=/dev/stdout
-stdout_logfile_maxbytes=0
-stderr_logfile=/dev/stderr
-stderr_logfile_maxbytes=0
-
-[program:reverb]
-directory=/var/www/html
-command=php artisan reverb:start --host=0.0.0.0 --port=8080
-user=www-data
-autostart=true
-autorestart=true
-stdout_logfile=/dev/stdout
-stdout_logfile_maxbytes=0
-stderr_logfile=/dev/stderr
-stderr_logfile_maxbytes=0
-SUPERVISOR
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # =========================================================
 # Entrypoint (Laravel boot + migrations)
 # =========================================================
-COPY --chmod=755 entrypoint.sh /entrypoint.sh
+COPY --chmod=755 docker/entrypoint.sh /entrypoint.sh
 
 EXPOSE 80
 ENTRYPOINT ["/entrypoint.sh"]
