@@ -13,6 +13,32 @@ Before you begin, make sure you have the following installed:
 
 ## Setup
 
+### Environment Configuration
+
+Before running the app, create your `.env` file.
+
+You can copy the example provided in the repository:
+
+```bash
+cp .env.example .env
+```
+
+Then open `.env` and update the values as needed:
+
+- Generate an application key:
+  ```bash
+  php artisan key:generate
+  ```
+- Adjust URLs (`APP_URL`, `ASSET_URL`) to match your local or production setup.
+- Update any WebSocket/Reverb hostnames if you’re deploying remotely.
+
+For Production deployments:
+- create a `.env.production` file similarly.
+- Ensure all settings match your production environment.
+- Set `APP_ENV=production` and `APP_DEBUG=false`.
+- Update database credentials accordingly.
+- add `VITE_REVERB_TLS=true`
+
 ### 1. Clone the repository
 
 ```bash
