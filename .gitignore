@@ -17,9 +17,6 @@
 /.phpunit.cache
 
 # --- Frontend build / Vite ---
-/resources/js/actions/
-/resources/js/routes/
-/resources/js/wayfinder/
 /dist/
 
 # --- Local / Editor stuff ---

@@ -142,7 +142,7 @@ This will:
 
 ---
 
-### Deploy Container
+### Deploy (with repo present) Container
 
 Use the `./deploy` script to run the built image in either `dev` or `prod` mode.
 

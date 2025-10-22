@@ -61,7 +61,10 @@ COPY --chown=www-data:www-data --from=vendor /app/vendor ./vendor
 COPY --chown=www-data:www-data --from=fe /app/public/build ./public/build
 
 # ---- Fix storage permissions ----
-RUN mkdir -p storage/framework/{sessions,views,cache} \
+RUN mkdir -p \
+    storage/framework/sessions \
+    storage/framework/views \
+    storage/framework/cache \
     storage/logs \
     bootstrap/cache \
  && chown -R www-data:www-data storage bootstrap/cache \
