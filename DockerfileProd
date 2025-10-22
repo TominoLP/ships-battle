@@ -11,7 +11,7 @@ RUN corepack enable && corepack prepare yarn@4.4.1 --activate \
 
 # Copy only what's needed for build
 COPY resources ./resources
-COPY vite.config.ts vite.config.docker.ts tsconfig.json ./
+COPY vite.config.ts ./docker/vite.config.docker.ts tsconfig.json ./
 
 # Use Docker-specific vite config (without wayfinder)
 RUN cp vite.config.docker.ts vite.config.ts

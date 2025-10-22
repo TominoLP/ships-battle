@@ -20,7 +20,6 @@
 /resources/js/routes/
 /resources/js/wayfinder/
 /dist/
-/vite.config.docker.ts
 
 # --- Local / Editor stuff ---
 /.idea/
