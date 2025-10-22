@@ -251,7 +251,7 @@ function placeRandomly() {
 
       <!-- PLACING: condensed ShipPalette + your board (single card) -->
       <section v-else-if="gs.step === 'placing'"
-               class="mx-auto w-full max-w-[60%] rounded-xl border border-slate-700 bg-slate-900/80 p-4 shadow-xl">
+               class="mx-auto w-max rounded-xl border border-slate-700 bg-slate-900/80 p-4 shadow-xl">
         <h3 class="mb-4 text-center text-slate-200">Dein Spielbrett</h3>
 
         <div class="grid grid-cols-[minmax(220px,280px)_1fr] gap-4">

@@ -6,9 +6,9 @@ const gameCode = defineModel<string>('gameCode', { required: true });
 
 const showMode = ref<'none' | 'create' | 'join'>('none');
 
-const validName = computed(() => (name.value ?? '').trim().length > 0);
+const validName = computed(() => (name.value ?? '').trim().length > 0 && (name.value ?? '').trim().length <= 20 && (name.value ?? '').trim().length >= 3);
 const canCreate = computed(() => validName.value);
-const canJoin = computed(() => validName.value && !!gameCode.value);
+const canJoin = computed(() => validName.value && !!gameCode.value && gameCode.value.trim().length === 6);
 
 const emit = defineEmits<{ (e: 'create'): void; (e: 'join'): void }>();
 

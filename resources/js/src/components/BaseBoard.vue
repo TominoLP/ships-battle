@@ -19,7 +19,7 @@ defineExpose({ getGridEl: () => gridEl.value });
 
 <template>
   <div class="space-y-2">
-    <div class="relative mt-0 w-fit select-none rounded-2xl p-3 backdrop-blur">
+    <div class="relative mt-0 w-fit select-none rounded-2xl p-3 backdrop-blur mr-6">
       <div class="grid items-start gap-[6px]" style="grid-template-columns: auto 1fr;">
         <!-- Left letters -->
         <div class="grid gap-[6px] mt-9" style="grid-template-rows: auto repeat(12,minmax(2rem,auto));">
