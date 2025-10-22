@@ -1,5 +1,5 @@
 <!-- BaseBoard.vue -->
-<script setup lang="ts">
+<script lang="ts" setup>
 import { ref } from 'vue';
 
 const props = defineProps<{
@@ -8,13 +8,13 @@ const props = defineProps<{
   showHint?: string
   getCellClass: (cell: number, x: number, y: number) => string
   onCellClick?: (x: number, y: number, cell: number) => void
-}>()
+}>();
 
-const emit = defineEmits<{ (e: 'cellClick', x: number, y: number): void }>()
-const letters = props.letters ?? 'ABCDEFGHIJKL'.split('')
+const emit = defineEmits<{ (e: 'cellClick', x: number, y: number): void }>();
+const letters = props.letters ?? 'ABCDEFGHIJKL'.split('');
 
-const gridEl = ref<HTMLElement | null>(null)
-defineExpose({ getGridEl: () => gridEl.value })
+const gridEl = ref<HTMLElement | null>(null);
+defineExpose({ getGridEl: () => gridEl.value });
 </script>
 
 <template>
@@ -39,13 +39,13 @@ defineExpose({ getGridEl: () => gridEl.value })
             </div>
           </div>
 
-          <div class="grid grid-cols-12 gap-[6px]" data-board-grid ref="gridEl">
+          <div ref="gridEl" class="grid grid-cols-12 gap-[6px]" data-board-grid>
             <div v-for="(row, y) in board" :key="y" class="contents">
               <div
                 v-for="(cell, x) in row"
                 :key="x"
-                class="relative h-8 w-8 sm:h-9 sm:w-9 rounded-lg transition-all duration-150 border-none"
                 :class="getCellClass(cell, x, y)"
+                class="relative h-8 w-8 sm:h-9 sm:w-9 rounded-lg transition-all duration-150 border-none"
                 @click="onCellClick && onCellClick(x, y, cell); emit('cellClick', x, y)"
               />
             </div>

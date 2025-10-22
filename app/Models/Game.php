@@ -27,7 +27,7 @@ class Game extends Model
     const STATUS_CREATING = 'creating';
     const STATUS_IN_PROGRESS = 'in_progress';
     const STATUS_COMPLETED = 'completed';
-    
+
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
@@ -37,7 +37,7 @@ class Game extends Model
         'status',
         'winner_player_id',
     ];
-    
+
     protected static function boot(): void
     {
         parent::boot();
@@ -49,15 +49,14 @@ class Game extends Model
             }
         });
     }
-    
+
     private static function generateUniqueCode(): string
     {
         static $badWords = ['ass', 'sex', 'fuk', 'pis', 'cum', 'dck', 'cnt', 'tit', 'gay', 'wtf', 'fag',];
-        
+
         do {
             $code = Str::upper(Str::random(6));
-            $containsBadWord = collect($badWords)->contains(fn($word) =>
-                str_contains(Str::lower($code), $word)
+            $containsBadWord = collect($badWords)->contains(fn($word) => str_contains(Str::lower($code), $word)
             );
 
         } while ($containsBadWord || self::where('code', $code)->exists());

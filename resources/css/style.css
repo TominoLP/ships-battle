@@ -1,8 +1,9 @@
-
 @tailwind utilities;
 
 /* extra tweak for grids */
-.grid { user-select: none; }
+.grid {
+    user-select: none;
+}
 
 .body {
     background-color: #1a202c;

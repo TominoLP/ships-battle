@@ -41,16 +41,11 @@ class Player extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
-    
+
     protected $appends = [
         'hits',
         'sunk_ships',
     ];
-
-    public function game(): BelongsTo
-    {
-        return $this->belongsTo(Game::class);
-    }
 
     protected static function booted(): void
     {
@@ -66,11 +61,9 @@ class Player extends Model
         return array_fill(0, 12, array_fill(0, 12, 0));
     }
 
-    public function enemy(): self|null
+    public function game(): BelongsTo
     {
-        return self::where('game_id', $this->game_id)
-            ->where('id', '!=', $this->id)
-            ->first();
+        return $this->belongsTo(Game::class);
     }
 
     public function getHitsAttribute(): int
@@ -83,7 +76,14 @@ class Player extends Model
             ->filter(fn($cell) => $cell === 2 || $cell === 3)
             ->count();
     }
-    
+
+    public function enemy(): self|null
+    {
+        return self::where('game_id', $this->game_id)
+            ->where('id', '!=', $this->id)
+            ->first();
+    }
+
     public function getSunkShipsAttribute(): int
     {
         $enemy = $this->enemy();

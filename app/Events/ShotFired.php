@@ -4,7 +4,6 @@ namespace App\Events;
 
 use App\Models\Player;
 use Illuminate\Broadcasting\Channel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Queue\SerializesModels;
 
@@ -14,10 +13,12 @@ class ShotFired implements ShouldBroadcastNow
 
     public function __construct(
         public Player $player,
-        public int $x,
-        public int $y,
+        public int    $x,
+        public int    $y,
         public string $result
-    ) {}
+    )
+    {
+    }
 
     public function broadcastOn(): Channel
     {

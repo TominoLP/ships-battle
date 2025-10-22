@@ -14,31 +14,38 @@ Before you begin, make sure you have the following installed:
 ## Setup
 
 ### 1. Clone the repository
+
 ```bash
 git clone https://github.com/your-org/ships-app.git
 cd ships-app
 ```
 
 ### 2. Install dependencies
+
 ```bash
 yarn install
 ```
+
 or
+
 ```bash
 npm install
 ```
 
 ### 3. Start Docker environment
+
 ```bash
 docker compose up -d
 ```
 
 ### 4. Create and migrate database
+
 ```bash
 php artisan migrate
 ```
 
 If it’s the first time running the project, you may also want to seed the database:
+
 ```bash
 php artisan db:seed
 ```
@@ -95,12 +102,14 @@ The `./build` script creates a clean Docker image of the app using `DockerfilePr
 ```
 
 **Examples:**
+
 ```bash
 ./build
 ./build v1.2.3
 ```
 
 This will:
+
 - Remove old build artifacts
 - Build a new Docker image without cache
 - Tag it with `latest` or a custom tag
@@ -114,18 +123,22 @@ Use the `./deploy` script to run the built image in either `dev` or `prod` mode.
 ```bash
 ./deploy dev
 ```
+
 or
+
 ```bash
 ./deploy prod
 ```
 
 This will:
+
 - Stop and remove existing containers
 - Start a new container using the selected `.env` file
 - Mount the database storage
 - Expose the correct ports (8080 for dev, 6969 for prod)
 
 **After deployment:**
+
 ```bash
 # Check container status
 docker ps

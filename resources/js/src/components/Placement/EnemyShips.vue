@@ -1,26 +1,26 @@
-<script setup lang="ts">
-import { computed } from 'vue'
+<script lang="ts" setup>
+import { computed } from 'vue';
 
 type Ship = { key: string | number; size: number }
 
 const props = defineProps<{
   ships: Ship[]
-  sunkShips: number[] 
-}>()
+  sunkShips: number[]
+}>();
 
 const shipsWithStatus = computed(() => {
   const counts = props.sunkShips.reduce<Record<number, number>>((m, s) => {
-    m[s] = (m[s] ?? 0) + 1
-    return m
-  }, {})
+    m[s] = (m[s] ?? 0) + 1;
+    return m;
+  }, {});
 
   return props.ships.map((ship) => {
-    const remaining = counts[ship.size] ?? 0
-    const sunk = remaining > 0
-    if (sunk) counts[ship.size] = remaining - 1
-    return { ...ship, sunk }
-  })
-})
+    const remaining = counts[ship.size] ?? 0;
+    const sunk = remaining > 0;
+    if (sunk) counts[ship.size] = remaining - 1;
+    return { ...ship, sunk };
+  });
+});
 </script>
 
 <template>
@@ -34,10 +34,10 @@ const shipsWithStatus = computed(() => {
         <div
           v-for="i in ship.size"
           :key="i"
-          class="h-4 flex-1 rounded-md border transition"
           :class="ship.sunk
             ? 'border-rose-500/50 bg-rose-500/80 shadow-[inset_0_0_0_1px_rgba(244,63,94,.35),0_6px_14px_-6px_rgba(244,63,94,.5)]'
             : 'bg-slate-700'"
+          class="h-4 flex-1 rounded-md border transition"
         />
       </div>
     </div>

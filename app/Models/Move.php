@@ -29,7 +29,7 @@ class Move extends Model
         'y',
         'result',
     ];
-    
+
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',

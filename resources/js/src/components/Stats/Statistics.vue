@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 // leaf empty: a styled card you can fill with live stats later
 </script>
 

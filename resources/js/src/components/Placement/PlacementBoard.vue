@@ -1,6 +1,6 @@
-<script setup lang="ts">
-import { computed, ref, unref, defineExpose } from 'vue'
-import type { Dir } from '@/src/types'
+<script lang="ts" setup>
+import { computed, ref, unref } from 'vue';
+import type { Dir } from '@/src/types';
 import BaseBoard from '@/src/components/BaseBoard.vue';
 
 const props = defineProps<{
@@ -9,57 +9,66 @@ const props = defineProps<{
   applyShip: (x: number, y: number, size: number, dir: Dir) => void
   nextSize?: number | null
   orientation: Dir
-}>()
+}>();
 
-const board = computed(() => unref(props.board))
-const nextSize = computed(() => unref(props.nextSize) as number | null | undefined)
-const orientation = computed<Dir>(() => unref(props.orientation) as Dir)
+const board = computed(() => unref(props.board));
+const nextSize = computed(() => unref(props.nextSize) as number | null | undefined);
+const orientation = computed<Dir>(() => unref(props.orientation) as Dir);
 
-const letters = 'ABCDEFGHIJKL'.split('')
+const hoverX = ref<number | null>(null);
+const hoverY = ref<number | null>(null);
 
-const hoverX = ref<number | null>(null)
-const hoverY = ref<number | null>(null)
-function clearHover(){ hoverX.value = null; hoverY.value = null }
-function setExternalHover(x: number | null, y: number | null){ hoverX.value = x; hoverY.value = y }
-function getHoverCell(){ return (hoverX.value==null||hoverY.value==null) ? null : { x: hoverX.value, y: hoverY.value } }
+function clearHover() {
+  hoverX.value = null;
+  hoverY.value = null;
+}
 
-function inPreview(x:number,y:number){
-  if (nextSize.value == null) return false
-  if (hoverX.value === null || hoverY.value === null) return false
-  const s = nextSize.value
-  const hx = hoverX.value, hy = hoverY.value
+function setExternalHover(x: number | null, y: number | null) {
+  hoverX.value = x;
+  hoverY.value = y;
+}
+
+function getHoverCell() {
+  return (hoverX.value == null || hoverY.value == null) ? null : { x: hoverX.value, y: hoverY.value };
+}
+
+function inPreview(x: number, y: number) {
+  if (nextSize.value == null) return false;
+  if (hoverX.value === null || hoverY.value === null) return false;
+  const s = nextSize.value;
+  const hx = hoverX.value, hy = hoverY.value;
   return orientation.value === 'H'
     ? (y === hy && x >= hx && x < hx + s)
-    : (x === hx && y >= hy && y < hy + s)
-}
-function previewIsValid(){
-  if (nextSize.value == null || hoverX.value === null || hoverY.value === null) return false
-  return props.canPlace(hoverX.value, hoverY.value, nextSize.value as number, orientation.value)
+    : (x === hx && y >= hy && y < hy + s);
 }
 
-// === NEW: get the grid element from BaseBoard
-const baseRef = ref<InstanceType<typeof BaseBoard> | null>(null)
-
-const isSm = () => typeof window !== 'undefined' && window.matchMedia?.('(min-width: 640px)').matches
-const cellPx = computed(() => (isSm() ? 36 : 32))
-const gapPx = 6
-
-function getCellFromPoint(clientX:number, clientY:number){
-  const grid = baseRef.value?.getGridEl?.() as HTMLElement | null
-  if (!grid) return null
-  const r = grid.getBoundingClientRect()
-  const localX = clientX - r.left
-  const localY = clientY - r.top
-  if (localX < 0 || localY < 0 || localX > r.width || localY > r.height) return null
-  const step = cellPx.value + gapPx
-  let x = Math.floor(localX / step)
-  let y = Math.floor(localY / step)
-  x = Math.max(0, Math.min(11, x))
-  y = Math.max(0, Math.min(11, y))
-  return { x, y }
+function previewIsValid() {
+  if (nextSize.value == null || hoverX.value === null || hoverY.value === null) return false;
+  return props.canPlace(hoverX.value, hoverY.value, nextSize.value as number, orientation.value);
 }
 
-defineExpose({ getCellFromPoint, setExternalHover, clearHover, getHoverCell })
+const baseRef = ref<InstanceType<typeof BaseBoard> | null>(null);
+
+const isSm = () => typeof window !== 'undefined' && window.matchMedia?.('(min-width: 640px)').matches;
+const cellPx = computed(() => (isSm() ? 36 : 32));
+const gapPx = 6;
+
+function getCellFromPoint(clientX: number, clientY: number) {
+  const grid = (baseRef.value as any)?.getGridEl?.() as HTMLElement | null;
+  if (!grid) return null;
+  const r = grid.getBoundingClientRect();
+  const localX = clientX - r.left;
+  const localY = clientY - r.top;
+  if (localX < 0 || localY < 0 || localX > r.width || localY > r.height) return null;
+  const step = cellPx.value + gapPx;
+  let x = Math.floor(localX / step);
+  let y = Math.floor(localY / step);
+  x = Math.max(0, Math.min(11, x));
+  y = Math.max(0, Math.min(11, y));
+  return { x, y };
+}
+
+defineExpose({ getCellFromPoint, setExternalHover, clearHover, getHoverCell });
 </script>
 
 <template>

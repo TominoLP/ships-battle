@@ -1,7 +1,12 @@
 @import "tailwindcss";
 @import "./theme.css";
 
-select:focus, input:focus, button:focus { outline: none }
+select:focus, input:focus, button:focus {
+    outline: none
+}
 
 /* optional: subtle animation when ghost first appears */
-.drag-ghost { transform: scale(0.98); opacity: 0.98; }
+.drag-ghost {
+    transform: scale(0.98);
+    opacity: 0.98;
+}

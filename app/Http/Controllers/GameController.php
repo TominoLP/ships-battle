@@ -2,38 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\GameFinished;
 use App\Events\PlayerJoined;
 use App\Models\Game;
 use App\Models\Player;
-use App\Models\Move;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class GameController extends Controller
 {
-    public function create(Request $request): JsonResponse
-    {
-        $request->validate(['name' => 'required|string|max:50']);
-
-        $game = Game::create();
-        $player = Player::create([
-            'game_id' => $game->id,
-            'name' => $request->name,
-            'is_turn' => true,
-        ]);
-
-        broadcast(new \App\Events\GameCreated($game, $player));
-
-        return response()->json([
-            'game_code' => $game->code,
-            'player_id' => $player->id,
-            'game_id' => $game->id,
-        ]);
-    }
-
     public function join(Request $request): JsonResponse
     {
         $request->validate([
@@ -55,10 +32,30 @@ class GameController extends Controller
 
         // switch to "creating" (ship placement)
         $game->update(['status' => Game::STATUS_CREATING]);
-        
+
         broadcast(new PlayerJoined($game, $player));
 
         return response()->json([
+            'player_id' => $player->id,
+            'game_id' => $game->id,
+        ]);
+    }
+
+    public function create(Request $request): JsonResponse
+    {
+        $request->validate(['name' => 'required|string|max:50']);
+
+        $game = Game::create();
+        $player = Player::create([
+            'game_id' => $game->id,
+            'name' => $request->name,
+            'is_turn' => true,
+        ]);
+
+        broadcast(new \App\Events\GameCreated($game, $player));
+
+        return response()->json([
+            'game_code' => $game->code,
             'player_id' => $player->id,
             'game_id' => $game->id,
         ]);
@@ -84,9 +81,9 @@ class GameController extends Controller
         ]);
 
         // 1) Fleet must match exactly: 1×5, 2×4, 3×3, 4×2
-        $expected = [5=>1, 4=>2, 3=>3, 2=>4];
+        $expected = [5 => 1, 4 => 2, 3 => 3, 2 => 4];
         $counts = $ships->groupBy('size')->map->count()->all();
-        foreach ($expected as $size=>$need) {
+        foreach ($expected as $size => $need) {
             if (($counts[$size] ?? 0) !== $need) {
                 return response()->json(['error' => "Invalid fleet: need {$need} of size {$size}"], 422);
             }
@@ -94,21 +91,22 @@ class GameController extends Controller
         if ($ships->count() !== array_sum($expected)) {
             return response()->json(['error' => 'Invalid fleet count'], 422);
         }
-        
+
         $board = array_fill(0, 12, array_fill(0, 12, 0));
 
-        $inBounds = fn($x,$y) => $x>=0 && $x<12 && $y>=0 && $y<12;
-        $canPlace = function($x,$y,$size,$dir) use (&$board,$inBounds) {
+        $inBounds = fn($x, $y) => $x >= 0 && $x < 12 && $y >= 0 && $y < 12;
+        $canPlace = function ($x, $y, $size, $dir) use (&$board, $inBounds) {
             // no-touch rule (8-neighbours)
-            for ($i = 0; $i < $size; $i++){
+            for ($i = 0; $i < $size; $i++) {
                 $cx = $dir === 'H' ? $x + $i : $x;
                 $cy = $dir === 'V' ? $y + $i : $y;
-                if (!$inBounds($cx,$cy)) return false;
+                if (!$inBounds($cx, $cy)) return false;
                 if ($board[$cy][$cx] !== 0) return false;
-                for ($dy =- 1; $dy <= 1; $dy++){
-                    for ($dx =- 1; $dx <= 1; $dx++){
-                        $nx = $cx + $dx; $ny = $cy + $dy;
-                        if ($inBounds($nx,$ny) && $board[$ny][$nx] === 1) return false;
+                for ($dy = -1; $dy <= 1; $dy++) {
+                    for ($dx = -1; $dx <= 1; $dx++) {
+                        $nx = $cx + $dx;
+                        $ny = $cy + $dy;
+                        if ($inBounds($nx, $ny) && $board[$ny][$nx] === 1) return false;
                     }
                 }
             }
@@ -116,12 +114,12 @@ class GameController extends Controller
         };
 
         foreach ($ships as $s) {
-            if (!$canPlace($s['x'],$s['y'],$s['size'],$s['dir'])) {
+            if (!$canPlace($s['x'], $s['y'], $s['size'], $s['dir'])) {
                 return response()->json(['error' => 'Ship placement invalid (bounds/overlap/touch)'], 422);
             }
-            for ($i=0; $i<$s['size']; $i++){
-                $cx = $s['dir']==='H' ? $s['x']+$i : $s['x'];
-                $cy = $s['dir']==='V' ? $s['y']+$i : $s['y'];
+            for ($i = 0; $i < $s['size']; $i++) {
+                $cx = $s['dir'] === 'H' ? $s['x'] + $i : $s['x'];
+                $cy = $s['dir'] === 'V' ? $s['y'] + $i : $s['y'];
                 $board[$cy][$cx] = 1;
             }
         }
@@ -160,35 +158,47 @@ class GameController extends Controller
     {
         $request->validate([
             'player_id' => 'required|integer|exists:players,id',
-            'x'         => 'required|integer|min:0|max:11',
-            'y'         => 'required|integer|min:0|max:11',
+            'x' => 'required|integer|min:0|max:11',
+            'y' => 'required|integer|min:0|max:11',
         ]);
 
         // small helpers (pure array ops)
-        $isShipCell = static function(array $board, int $x, int $y): bool {
+        $isShipCell = static function (array $board, int $x, int $y): bool {
             return isset($board[$y][$x]) && ($board[$y][$x] === 1 || $board[$y][$x] === 2);
         };
-        $collectShipSpan = static function(array $board, int $x, int $y) use ($isShipCell): array {
+        $collectShipSpan = static function (array $board, int $x, int $y) use ($isShipCell): array {
             // Determine axis by looking at neighbors
             $horiz = $isShipCell($board, $x - 1, $y) || $isShipCell($board, $x + 1, $y);
-            $vert  = $isShipCell($board, $x, $y - 1) || $isShipCell($board, $x, $y + 1);
+            $vert = $isShipCell($board, $x, $y - 1) || $isShipCell($board, $x, $y + 1);
 
             $cells = [[$x, $y]];
 
             if ($horiz) {
                 // left
                 $cx = $x - 1;
-                while ($isShipCell($board, $cx, $y)) { $cells[] = [$cx, $y]; $cx--; }
+                while ($isShipCell($board, $cx, $y)) {
+                    $cells[] = [$cx, $y];
+                    $cx--;
+                }
                 // right
                 $cx = $x + 1;
-                while ($isShipCell($board, $cx, $y)) { $cells[] = [$cx, $y]; $cx++; }
+                while ($isShipCell($board, $cx, $y)) {
+                    $cells[] = [$cx, $y];
+                    $cx++;
+                }
             } elseif ($vert) {
                 // up
                 $cy = $y - 1;
-                while ($isShipCell($board, $x, $cy)) { $cells[] = [$x, $cy]; $cy--; }
+                while ($isShipCell($board, $x, $cy)) {
+                    $cells[] = [$x, $cy];
+                    $cy--;
+                }
                 // down
                 $cy = $y + 1;
-                while ($isShipCell($board, $x, $cy)) { $cells[] = [$x, $cy]; $cy++; }
+                while ($isShipCell($board, $x, $cy)) {
+                    $cells[] = [$x, $cy];
+                    $cy++;
+                }
             }
             // single-cell ships would just be the cell itself
             return $cells;
@@ -212,11 +222,11 @@ class GameController extends Controller
                 return response()->json(['error' => 'Not your turn'], 409);
             }
 
-            $x = (int) $request->x;
-            $y = (int) $request->y;
+            $x = (int)$request->x;
+            $y = (int)$request->y;
 
             $board = $enemy->board; // array (cast on model)
-            $cell  = $board[$y][$x] ?? 0;
+            $cell = $board[$y][$x] ?? 0;
 
             // 0 empty, 1 ship, 2 hit, 3 miss
             $result = match ($cell) {
@@ -237,13 +247,16 @@ class GameController extends Controller
                 $spanCells = $collectShipSpan($board, $x, $y);
                 $anyUndamaged = false;
                 foreach ($spanCells as [$cx, $cy]) {
-                    if (($board[$cy][$cx] ?? 0) === 1) { $anyUndamaged = true; break; }
+                    if (($board[$cy][$cx] ?? 0) === 1) {
+                        $anyUndamaged = true;
+                        break;
+                    }
                 }
                 if (!$anyUndamaged) {
                     // the ship spanning through (x,y) is fully destroyed
                     $result = 'sunk';
                     $sunkInfo = [
-                        'size'  => count($spanCells),
+                        'size' => count($spanCells),
                         'cells' => $spanCells, // [[x,y], ...]
                     ];
                 }
@@ -254,11 +267,11 @@ class GameController extends Controller
 
             // record move
             \App\Models\Move::create([
-                'game_id'   => $player->game_id,
+                'game_id' => $player->game_id,
                 'player_id' => $player->id,
-                'x'         => $x,
-                'y'         => $y,
-                'result'    => $result, // now can be 'sunk'
+                'x' => $x,
+                'y' => $y,
+                'result' => $result, // now can be 'sunk'
             ]);
 
             // broadcast shot first
@@ -279,16 +292,16 @@ class GameController extends Controller
 
                 $game = $player->game()->lockForUpdate()->first();
                 $game->update([
-                    'status'           => \App\Models\Game::STATUS_COMPLETED,
+                    'status' => \App\Models\Game::STATUS_COMPLETED,
                     'winner_player_id' => $player->id,
                 ]);
 
                 broadcast(new \App\Events\GameFinished($game, $player));
 
                 return response()->json([
-                    'result'   => $result,
+                    'result' => $result,
                     'gameOver' => true,
-                    'winner'   => ['id' => $player->id, 'name' => $player->name],
+                    'winner' => ['id' => $player->id, 'name' => $player->name],
                 ]);
             }
 
@@ -300,7 +313,7 @@ class GameController extends Controller
             }
 
             return [
-                'result'   => $result,   // 'hit' | 'miss' | 'already' | 'sunk'
+                'result' => $result,   // 'hit' | 'miss' | 'already' | 'sunk'
                 'gameOver' => false,
             ];
         });

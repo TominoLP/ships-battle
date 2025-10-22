@@ -1,16 +1,16 @@
-<script setup lang="ts">
-import { computed, unref } from 'vue'
+<script lang="ts" setup>
+import { computed, unref } from 'vue';
 
 const props = defineProps({
   open: { type: [Boolean, Object], required: true },
   youWon: { type: [Boolean, Object, null], default: null },
-  winnerName: { type: [String, Object], default: '' },
-})
-defineEmits(['close'])
+  winnerName: { type: [String, Object], default: '' }
+});
+defineEmits(['close']);
 
-const open = computed(() => unref(props.open) as boolean)
-const youWon = computed(() => unref(props.youWon) as boolean | null)
-const winnerName = computed(() => unref(props.winnerName) as string)
+const open = computed(() => unref(props.open) as boolean);
+const youWon = computed(() => unref(props.youWon) as boolean | null);
+const winnerName = computed(() => unref(props.winnerName) as string);
 </script>
 
 <template>
