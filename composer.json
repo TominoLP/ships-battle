@@ -1,8 +1,9 @@
 {
   "$schema": "https://getcomposer.org/schema.json",
-  "name": "laravel/blank-vue-starter-kit",
+  "name": "tweio/ships-battle",
   "type": "project",
-  "description": "The skeleton application for the Laravel framework.",
+  "description": "a battleships game",
+  "version": "0.1.6",
   "keywords": [
     "laravel",
     "framework"

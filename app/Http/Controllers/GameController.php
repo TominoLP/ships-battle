@@ -325,4 +325,191 @@ class GameController extends Controller
         return response()->json($payload);
     }
 
+    public function useAbility(Request $request): JsonResponse
+    {
+        $request->validate([
+            'player_id' => 'required|integer|exists:players,id',
+            'type' => 'required|string|in:plane,comb,splatter',
+            'payload' => 'nullable|array',
+        ]);
+
+        $payload = DB::transaction(function () use ($request) {
+            /** @var Player $player */
+            $player = \App\Models\Player::lockForUpdate()->findOrFail($request->player_id);
+
+            /** @var Player|null $enemy */
+            $enemy = \App\Models\Player::where('game_id', $player->game_id)
+                ->where('id', '<>', $player->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$enemy) {
+                return response()->json(['error' => 'No enemy yet'], 400);
+            }
+            if (!$player->is_turn) {
+                return response()->json(['error' => 'Not your turn'], 409);
+            }
+
+            $type = $request->string('type')->toString();
+            $pl = $request->input('payload', []);
+
+            // board size (12×12)
+            $size = 12;
+
+            // ---- helper closures (mirror those in shoot) ----
+            $isShipCell = static function (array $board, int $x, int $y): bool {
+                return isset($board[$y][$x]) && ($board[$y][$x] === 1 || $board[$y][$x] === 2);
+            };
+            $collectShipSpan = static function (array $board, int $x, int $y) use ($isShipCell): array {
+                $horiz = $isShipCell($board, $x - 1, $y) || $isShipCell($board, $x + 1, $y);
+                $vert  = $isShipCell($board, $x, $y - 1) || $isShipCell($board, $x, $y + 1);
+                $cells = [[$x, $y]];
+                if ($horiz) {
+                    for ($cx = $x - 1; $isShipCell($board, $cx, $y); $cx--) $cells[] = [$cx, $y];
+                    for ($cx = $x + 1; $isShipCell($board, $cx, $y); $cx++) $cells[] = [$cx, $y];
+                } elseif ($vert) {
+                    for ($cy = $y - 1; $isShipCell($board, $x, $cy); $cy--) $cells[] = [$x, $cy];
+                    for ($cy = $y + 1; $isShipCell($board, $x, $cy); $cy++) $cells[] = [$x, $cy];
+                }
+                return $cells;
+            };
+
+            // compute target cells
+            $targets = [];
+            if ($type === 'plane') {
+                // payload: { axis: 'row'|'col', index: 0..11 }
+                $axis = ($pl['axis'] ?? 'row') === 'col' ? 'col' : 'row';
+                $idx  = max(0, min($size - 1, (int)($pl['index'] ?? 0)));
+                if ($axis === 'row') {
+                    for ($x = 0; $x < $size; $x++) $targets[] = [$x, $idx];
+                } else {
+                    for ($y = 0; $y < $size; $y++) $targets[] = [$idx, $y];
+                }
+            } elseif ($type === 'comb') {
+                // payload: { center: { x, y } }
+                $c = $pl['center'] ?? null;
+                if (!is_array($c) || !isset($c['x'], $c['y'])) {
+                    return response()->json(['error' => 'Missing comb center'], 422);
+                }
+                $cx = (int)$c['x']; $cy = (int)$c['y'];
+                for ($dy = -2; $dy <= 2; $dy++) {
+                    for ($dx = -2; $dx <= 2; $dx++) {
+                        // skip 4 corners
+                        if (abs($dx) === 2 && abs($dy) === 2) continue;
+                        $x = $cx + $dx; $y = $cy + $dy;
+                        if ($x >= 0 && $x < $size && $y >= 0 && $y < $size) $targets[] = [$x, $y];
+                    }
+                }
+            } else { // splatter
+                // 12 random unique cells in-bounds
+                $total = $size * $size;
+                $need  = min(12, $total);
+                $picked = [];
+                $used = [];
+                while (count($picked) < $need) {
+                    $n = random_int(0, $total - 1);
+                    if (isset($used[$n])) continue;
+                    $used[$n] = true;
+                    $picked[] = [ $n % $size, intdiv($n, $size) ];
+                }
+                $targets = $picked;
+            }
+
+            // process each target (like shoot), mutating enemy board
+            $board = $enemy->board; // 0 empty, 1 ship, 2 hit, 3 miss
+            $shots = [];
+            $anyHit = false;
+            $sunkList = [];
+
+            foreach ($targets as [$x, $y]) {
+                $cell = $board[$y][$x] ?? 0;
+                $result = match ($cell) {
+                    0 => 'miss',
+                    1 => 'hit',
+                    2, 3 => 'already',
+                    default => 'miss',
+                };
+
+                $sunkInfo = null;
+
+                if ($result === 'hit') {
+                    $board[$y][$x] = 2;
+                    $enemy->update(['board' => $board]);
+
+                    $spanCells = $collectShipSpan($board, $x, $y);
+                    $anyUndamaged = false;
+                    foreach ($spanCells as [$cx, $cy]) {
+                        if (($board[$cy][$cx] ?? 0) === 1) { $anyUndamaged = true; break; }
+                    }
+                    if (!$anyUndamaged) {
+                        $result = 'sunk';
+                        $sunkInfo = ['size' => count($spanCells), 'cells' => $spanCells];
+                        $sunkList[] = $sunkInfo;
+                    }
+                } elseif ($result === 'miss') {
+                    $board[$y][$x] = 3;
+                    $enemy->update(['board' => $board]);
+                }
+
+                // record each move & broadcast like normal shots
+                \App\Models\Move::create([
+                    'game_id' => $player->game_id,
+                    'player_id' => $player->id,
+                    'x' => $x, 'y' => $y,
+                    'result' => $result,
+                ]);
+
+                broadcast(new \App\Events\ShotFired($player, $x, $y, $result));
+
+                if ($sunkInfo) {
+                    broadcast(new \App\Events\ShipSunk($player, $sunkInfo['size'], $sunkInfo['cells']));
+                }
+
+                if ($result === 'hit' || $result === 'sunk') $anyHit = true;
+
+                $shots[] = ['x' => $x, 'y' => $y, 'result' => $result];
+            }
+
+            // game over?
+            $gameOver = !collect($board)->flatten()->contains(1);
+            if ($gameOver) {
+                $player->update(['is_turn' => false]);
+                $enemy->update(['is_turn' => false]);
+
+                $game = $player->game()->lockForUpdate()->first();
+                $game->update([
+                    'status' => \App\Models\Game::STATUS_COMPLETED,
+                    'winner_player_id' => $player->id,
+                ]);
+
+                broadcast(new \App\Events\GameFinished($game, $player));
+
+                return response()->json([
+                    'shots' => $shots,
+                    'sunk' => $sunkList,
+                    'gameOver' => true,
+                    'winner' => ['id' => $player->id, 'name' => $player->name],
+                ]);
+            }
+
+            // turn handling: keep turn if any hit, otherwise switch
+            if (!$anyHit) {
+                $player->update(['is_turn' => false]);
+                $enemy->update(['is_turn' => true]);
+                broadcast(new \App\Events\TurnChanged($player->game, $enemy));
+            }
+
+            return [
+                'shots' => $shots,
+                'sunk' => $sunkList,
+                'gameOver' => false,
+            ];
+        });
+
+        if ($payload instanceof \Illuminate\Http\JsonResponse) return $payload;
+
+        return response()->json($payload);
+    }
+
+
 }

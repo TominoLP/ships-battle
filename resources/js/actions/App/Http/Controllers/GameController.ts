@@ -135,6 +135,40 @@ placeShips.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     method: 'post',
 })
 
-const GameController = { create, join, shoot, placeShips }
+/**
+* @see \App\Http\Controllers\GameController::useAbility
+* @see app/Http/Controllers/GameController.php:328
+* @route '/api/game/ability'
+*/
+export const useAbility = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: useAbility.url(options),
+    method: 'post',
+})
+
+useAbility.definition = {
+    methods: ["post"],
+    url: '/api/game/ability',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\GameController::useAbility
+* @see app/Http/Controllers/GameController.php:328
+* @route '/api/game/ability'
+*/
+useAbility.url = (options?: RouteQueryOptions) => {
+    return useAbility.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\GameController::useAbility
+* @see app/Http/Controllers/GameController.php:328
+* @route '/api/game/ability'
+*/
+useAbility.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: useAbility.url(options),
+    method: 'post',
+})
+
+const GameController = { create, join, shoot, placeShips, useAbility }
 
 export default GameController

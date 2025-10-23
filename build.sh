@@ -5,6 +5,7 @@ set -e
 IMAGE_NAME="ships-app"
 IMAGE_TAG="${1:-latest}"
 DOCKERFILE="DockerfileProd"
+USE_CACHE="${USE_CACHE:-true}"  # Set to "false" to force no-cache build
 
 echo "Building Docker Image: ${IMAGE_NAME}:${IMAGE_TAG}"
 echo "================================================"
@@ -25,12 +26,26 @@ fi
 echo "Cleaning old build artifacts..."
 rm -rf public/build/* || true
 
-# Build the image with no cache to ensure fresh build
-echo "Building image (no cache for fresh build)..."
+# Determine cache strategy
+CACHE_ARGS=()
+if [ "$USE_CACHE" = "false" ]; then
+    echo "Building with NO CACHE (forced fresh build)..."
+    CACHE_ARGS+=(--no-cache)
+else
+    echo "Building with cache enabled..."
+    # Use BuildKit cache mounts for better performance
+    export DOCKER_BUILDKIT=1
+    CACHE_ARGS+=(
+        --build-arg BUILDKIT_INLINE_CACHE=1
+    )
+fi
+
+# Build the image
 docker build \
-    --no-cache \
+    "${CACHE_ARGS[@]}" \
     -f "$DOCKERFILE" \
     -t "${IMAGE_NAME}:${IMAGE_TAG}" \
+    --build-arg APP_VERSION="${IMAGE_TAG}" \
     --progress=plain \
     .
 
@@ -45,6 +60,9 @@ if [ $? -eq 0 ]; then
     echo "Next steps:"
     echo "  Test locally:    ./deploy.sh dev"
     echo "  Deploy to prod:  ./deploy.sh prod"
+    echo ""
+    echo "Build options:"
+    echo "  Force fresh build: USE_CACHE=false ./build.sh ${IMAGE_TAG}"
 else
     echo ""
     echo "Build failed!"

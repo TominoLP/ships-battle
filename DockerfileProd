@@ -11,7 +11,8 @@ RUN corepack enable && corepack prepare yarn@4.4.1 --activate \
 
 # Copy only what's needed for build
 COPY resources ./resources
-COPY vite.config.ts ./docker/vite.config.docker.ts tsconfig.json ./
+# copy BOTH: your normal vite config AND the docker override that disables wayfinder
+COPY vite.config.ts docker/vite.config.docker.ts tsconfig.json ./
 
 # Use Docker-specific vite config (without wayfinder)
 RUN cp vite.config.docker.ts vite.config.ts
@@ -32,16 +33,12 @@ RUN composer install --no-dev --prefer-dist --no-interaction --no-scripts --opti
 # 3) Runtime (PHP-FPM + Nginx + Reverb) - ALPINE BASE
 # =========================================================
 FROM php:8.3-fpm-alpine
+ARG APP_VERSION=dev
 
 # ---- System & PHP deps ----
-RUN apk add --no-cache \
-    nginx \
-    supervisor \
-    sqlite \
-    sqlite-dev \
-    libzip-dev \
-    && docker-php-ext-install pdo pdo_sqlite bcmath pcntl \
-    && rm -rf /var/cache/apk/*
+RUN apk add --no-cache nginx supervisor sqlite sqlite-dev libzip-dev \
+ && docker-php-ext-install pdo pdo_sqlite bcmath pcntl zip \
+ && rm -rf /var/cache/apk/*
 
 WORKDIR /var/www/html
 
@@ -70,21 +67,21 @@ RUN mkdir -p \
  && chown -R www-data:www-data storage bootstrap/cache \
  && chmod -R 775 storage bootstrap/cache
 
-# =========================================================
-# Nginx Configuration
-# =========================================================
+# ---- Nginx Configuration ----
 RUN rm -f /etc/nginx/http.d/default.conf
 COPY docker/nginx.conf /etc/nginx/http.d/laravel.conf
 
-# =========================================================
-# Supervisor Configuration
-# =========================================================
+# ---- Supervisor Configuration ----
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# =========================================================
-# Entrypoint (Laravel boot + migrations)
-# =========================================================
+# ---- Entrypoint (Laravel boot + migrations) ----
 COPY --chmod=755 docker/entrypoint.sh /entrypoint.sh
+
+# ---- Image metadata + runtime env ----
+ARG APP_VERSION
+LABEL org.opencontainers.image.title="ships-app" \
+      org.opencontainers.image.version="${APP_VERSION}"
+ENV APP_VERSION="${APP_VERSION}"
 
 EXPOSE 80
 ENTRYPOINT ["/entrypoint.sh"]

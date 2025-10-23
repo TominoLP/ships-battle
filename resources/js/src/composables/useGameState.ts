@@ -162,10 +162,58 @@ export function useGameState() {
     }
   }
 
+  // === Ability support (optional server endpoint) ===
+  async function useAbility(
+    type: 'plane' | 'comb' | 'splatter',
+    payload: any
+  ) {
+    if (gameOver.value) return;
+    if (step.value !== 'playing' || !playerId.value) return;
+    if (!myTurn.value) {
+      pushMsg('Not your turn');
+      return;
+    }
+
+    try {
+      const data = await api<{
+        shots: Array<{ x: number; y: number; result: 'hit' | 'miss' | 'already' | 'sunk' }>;
+        sunk?: Array<{ size: number; cells: number[][] }>;
+        gameOver: boolean;
+        winner?: { id: number; name: string };
+      }>(
+        GameController.useAbility.post(),
+        { player_id: playerId.value, type, payload }
+      );
+
+      for (const s of data.shots) {
+        const { x, y, result } = s;
+        if (result === 'hit' || result === 'sunk') enemyBoard.value[y][x] = 2;
+        else if (result === 'miss') enemyBoard.value[y][x] = 1;
+      }
+
+      const hits = data.shots.filter(s => s.result === 'hit' || s.result === 'sunk').length;
+      const msg = type === 'plane'
+        ? `Ability: plane ${payload.axis} ${payload.index}`
+        : type === 'comb'
+          ? `Ability: comb @ (${payload.center?.x},${payload.center?.y})`
+          : 'Ability: splatter';
+      pushMsg(`${msg} → ${hits} hit(s)`);
+
+      if (data.gameOver && data.winner) {
+        youWon.value = data.winner.id === playerId.value;
+        winnerName.value = data.winner.name;
+        gameOver.value = true;
+      }
+    } catch (e: any) {
+      if (e?.response?.status === 409) pushMsg('Not your turn');
+      else pushMsg('Ability failed');
+    }
+  }
+
   return {
     step, name, gameCode, gameId, playerId, isReady, myTurn, messages,
     myBoard, enemyBoard, enemyName, enemySunkShips, gameOver, youWon, winnerName,
-    createGame, joinGame, resetForNewGame, readyUp, fire,
+    createGame, joinGame, resetForNewGame, readyUp, fire, useAbility,
     pushMsg
   };
 }
