@@ -72,7 +72,6 @@ function handleAbilityStart(type: AbilityType, ev: PointerEvent) {
             <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
               <path d="M20 6L9 17l-5-5" />
             </svg>
-            Alle verbraucht
           </span>
         </span>
       </div>
@@ -95,8 +94,7 @@ function handleAbilityStart(type: AbilityType, ev: PointerEvent) {
               Bereits verwendet (max. 1 pro Spiel)
             </template>
             <template v-else>
-              {{ canUseBomb ? 'Sprengt großen Bereich' : 'Erfordert 2 Versenkungen in diesem Zug' }}
-              · 1 Bombe pro Spiel
+              Sprengt großen Bereich
             </template>
           </div>
         </div>
@@ -159,7 +157,6 @@ function handleAbilityStart(type: AbilityType, ev: PointerEvent) {
             <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
               <path d="M20 6L9 17l-5-5" />
             </svg>
-            Alle verbraucht
           </span>
         </span>
       </div>

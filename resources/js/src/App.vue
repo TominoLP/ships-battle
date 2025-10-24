@@ -594,7 +594,16 @@ async function onEnemyCellClick(x: number, y: number) {
           <!-- PLAYING -->
           <div v-else class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
             <section v-if="!showMyBoard" class="lg:col-span-1 h-full rounded-xl border border-slate-700 bg-slate-900/80 p-4 shadow-xl">
-              <Statistics />
+              <Statistics
+                :my-board="gs.myBoard"
+                :enemy-board="gs.enemyBoard"
+                :enemy-name="gs.enemyName"
+                :ability-usage="gs.abilityUsage"
+                :enemy-sunk-ships="gs.enemySunkShips"
+                :step="gs.step"
+                :game-over="gs.gameOver"
+                :my-turn="gs.myTurn"
+              />
             </section>
 
             <section :class="['rounded-xl border border-slate-700 bg-slate-900/80 p-4 shadow-xl', showMyBoard ? 'lg:col-span-2' : 'lg:col-span-2']">
