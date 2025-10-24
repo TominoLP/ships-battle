@@ -31,6 +31,8 @@ class Player extends Model
         'is_turn',
         'is_ready',
         'ships',
+        'ability_usage',
+        'turn_kills',
     ];
 
     protected $casts = [
@@ -38,6 +40,8 @@ class Player extends Model
         'ships' => 'array',
         'board' => 'array',
         'is_turn' => 'boolean',
+        'ability_usage' => 'array',
+        'turn_kills' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -53,12 +57,41 @@ class Player extends Model
             if (empty($player->board)) {
                 $player->board = self::generateEmptyBoard();
             }
+            if (empty($player->ability_usage)) {
+                $player->ability_usage = self::defaultAbilityUsage();
+            }
+            if ($player->turn_kills === null) {
+                $player->turn_kills = 0;
+            }
         });
     }
 
     private static function generateEmptyBoard(): array
     {
         return array_fill(0, 12, array_fill(0, 12, 0));
+    }
+
+    public static function defaultAbilityUsage(): array
+    {
+        return [
+            'plane' => 0,
+            'splatter' => 0,
+            'comb' => 0,
+        ];
+    }
+
+    public function getAbilityUsageAttribute($value): array
+    {
+        if (is_array($value)) {
+            return array_merge(self::defaultAbilityUsage(), $value);
+        }
+
+        if (is_string($value)) {
+            $decoded = json_decode($value, true) ?: [];
+            return array_merge(self::defaultAbilityUsage(), $decoded);
+        }
+
+        return self::defaultAbilityUsage();
     }
 
     public function game(): BelongsTo

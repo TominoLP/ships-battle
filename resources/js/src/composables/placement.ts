@@ -108,6 +108,13 @@ export function usePlacement(boardSize = 12, fleet: ShipSpec[]) {
     return ship;
   }
 
+  function setShips(ships: PlacedShip[]) {
+    reset();
+    for (const ship of ships) {
+      applyShip(ship.x, ship.y, ship.size, ship.dir);
+    }
+  }
+
   return {
     board,
     canPlace,
@@ -122,6 +129,7 @@ export function usePlacement(boardSize = 12, fleet: ShipSpec[]) {
     placedShips,
     palette,
     findShipAt,
-    removeShip
+    removeShip,
+    setShips
   };
 }

@@ -10,4 +10,6 @@ Route::prefix('game')->group(function () {
     Route::post('/shoot', [GameController::class, 'shoot']);
     Route::post('/place-ships', [GameController::class, 'placeShips']);
     Route::post('/ability', [GameController::class, 'useAbility']);
+    Route::post('/placement/random', [GameController::class, 'randomPlacement']);
+    Route::get('/state/{player}', [GameController::class, 'state']);
 });

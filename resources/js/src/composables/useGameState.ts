@@ -1,4 +1,4 @@
-import { ref, unref, watch, computed } from 'vue';
+import { ref, unref, watch } from 'vue';
 import GameController from '@/actions/App/Http/Controllers/GameController';
 import { api } from '@/src/composables/useApi';
 import type { PlacedShip, Step } from '@/src/types';
@@ -26,52 +26,56 @@ export function useGameState() {
   const socket = ref<any>(null);
 
   // === NEW: Ability tracking ===
-  const abilityUsage = ref({
-    plane: 0,
-    splatter: 0,
-    comb: 0
-  });
+  const DEFAULT_ABILITY_USAGE = { plane: 0, splatter: 0, comb: 0 } as const;
+  const abilityUsage = ref({ ...DEFAULT_ABILITY_USAGE });
   const lastGameCode = ref<string | null>(null);
 
   // === NEW: Kill tracking ===
-  const sunkAtTurnStart = ref(0);
-  const baselineAtTurnStart = ref(0);
-
-  const currentSunkCount = computed(() => {
-    return Array.isArray(enemySunkShips.value)
-      ? enemySunkShips.value.length
-      : 0;
-  });
-
-  const turnKills = computed(() =>
-    sunkAtTurnStart.value - baselineAtTurnStart.value
-  );
+  const turnKills = ref(0);
 
   // Reset ability usage on game change
   watch(() => gameCode.value, (code) => {
     if (code && code !== lastGameCode.value) {
-      abilityUsage.value = { plane: 0, splatter: 0, comb: 0 };
+      abilityUsage.value = { ...DEFAULT_ABILITY_USAGE };
       lastGameCode.value = code;
-    }
-  });
-
-  // Track turn start baseline
-  watch(myTurn, (now, prev) => {
-    if (now && !prev) {
-      baselineAtTurnStart.value = currentSunkCount.value;
-      sunkAtTurnStart.value = currentSunkCount.value;
-    }
-  }, { immediate: true });
-
-  // Update sunk baseline when turn starts
-  watch([myTurn, currentSunkCount], ([isTurn, count]) => {
-    if (isTurn) {
-      sunkAtTurnStart.value = count;
+      turnKills.value = 0;
     }
   });
 
   function pushMsg(msg: string) {
     messages.value.unshift(`[${new Date().toLocaleTimeString()}] ${msg}`);
+  }
+
+  async function refreshState(targetPlayerId?: number) {
+    const id = targetPlayerId ?? playerId.value;
+    if (!id) return;
+
+    try {
+      const data = await api<{
+        player: {
+          board: number[][];
+          isTurn: boolean;
+          isReady: boolean;
+          abilityUsage: typeof DEFAULT_ABILITY_USAGE;
+          turnKills: number;
+        };
+        enemy: { id: number; name: string; isReady: boolean } | null;
+      }>(GameController.state.get(id));
+
+      if (data?.player) {
+        myBoard.value = data.player.board ?? myBoard.value;
+        myTurn.value = data.player.isTurn ?? myTurn.value;
+        isReady.value = data.player.isReady ?? isReady.value;
+        abilityUsage.value = data.player.abilityUsage ?? { ...DEFAULT_ABILITY_USAGE };
+        turnKills.value = data.player.turnKills ?? 0;
+      }
+
+      if (data?.enemy) {
+        enemyName.value = data.enemy.name ?? enemyName.value;
+      }
+    } catch (err) {
+      console.error('[GameState] Failed to refresh state', err);
+    }
   }
 
   async function createGame() {
@@ -83,6 +87,7 @@ export function useGameState() {
     gameId.value = data.game_id;
     playerId.value = data.player_id;
     initSocket();
+    await refreshState(data.player_id);
     step.value = 'lobby';
   }
 
@@ -94,6 +99,7 @@ export function useGameState() {
     gameId.value = data.game_id;
     playerId.value = data.player_id;
     initSocket();
+    await refreshState(data.player_id);
     step.value = 'placing';
   }
 
@@ -104,9 +110,8 @@ export function useGameState() {
     winnerName.value = '';
     isReady.value = false;
     enemyBoard.value = Array.from({ length: 12 }, () => Array(12).fill(0));
-    abilityUsage.value = { plane: 0, splatter: 0, comb: 0 };
-    sunkAtTurnStart.value = 0;
-    baselineAtTurnStart.value = 0;
+    abilityUsage.value = { ...DEFAULT_ABILITY_USAGE };
+    turnKills.value = 0;
   }
 
   function initSocket() {
@@ -137,6 +142,7 @@ export function useGameState() {
     socket.value.on('turn_changed', ({ player }: any) => {
       pushMsg(`Turn: ${player.name}`);
       myTurn.value = player.id === playerId.value;
+      turnKills.value = 0;
     });
 
     socket.value.on('shot_fired', (data: any) => {
@@ -170,6 +176,7 @@ export function useGameState() {
       step.value = 'playing';
       enemyName.value = players.find((p: any) => p.id !== playerId.value)?.name || '';
       myTurn.value = current?.id === playerId.value;
+      void refreshState(playerId.value ?? undefined);
     });
   }
 
@@ -183,6 +190,7 @@ export function useGameState() {
       { player_id: playerId.value, ships: plainShips }
     );
     isReady.value = true;
+    await refreshState();
     step.value = data.started ? 'playing' : 'lobby';
   }
 
@@ -194,15 +202,64 @@ export function useGameState() {
       return;
     }
     try {
-      const data = await api<{ result: 'hit' | 'miss' | 'sunk' | string }>(
+      const data = await api<{
+        shots: Array<{ x: number; y: number; result: string }>;
+        sunk?: Array<{ size: number }>;
+        gameOver: boolean;
+        winner?: { id: number; name: string };
+        abilityUsage?: typeof DEFAULT_ABILITY_USAGE;
+        turnKills?: number;
+      }>(
         GameController.shoot.post(),
         { player_id: playerId.value, x, y }
       );
-      enemyBoard.value[y][x] = (data.result === 'hit' || data.result === 'sunk') ? 2 : 1;
-      pushMsg(`You fired at (${x},${y}) – ${data.result}`);
+
+      const shot = data.shots?.[0];
+      if (shot) {
+        const result = shot.result.toLowerCase();
+        if (result === 'hit' || result === 'sunk') {
+          enemyBoard.value[shot.y][shot.x] = 2;
+        } else if (result === 'miss') {
+          enemyBoard.value[shot.y][shot.x] = 1;
+        }
+        pushMsg(`You fired at (${shot.x},${shot.y}) – ${result}`);
+        if (result === 'miss') {
+          myTurn.value = false;
+        }
+      }
+
+      if (data.abilityUsage) {
+        abilityUsage.value = data.abilityUsage;
+      }
+      if (typeof data.turnKills === 'number') {
+        turnKills.value = data.turnKills;
+      }
+
+      if (data.gameOver) {
+        gameOver.value = true;
+        if (data.winner) {
+          youWon.value = data.winner.id === playerId.value;
+          winnerName.value = data.winner.name;
+        }
+      }
     } catch (e: any) {
-      if (e?.response?.status === 409) pushMsg('Not your turn');
-      else pushMsg('Shot failed');
+      const resp: Response | undefined = e?.response;
+      if (resp) {
+        let message: string | null = null;
+        try {
+          const json = await resp.clone().json();
+          message = json?.error ?? null;
+        } catch (_) {
+          try {
+            message = await resp.clone().text();
+          } catch (_) {
+            message = null;
+          }
+        }
+        pushMsg(message || (resp.status === 409 ? 'Not your turn' : 'Shot failed'));
+      } else {
+        pushMsg('Shot failed');
+      }
     }
   }
 
@@ -224,19 +281,33 @@ export function useGameState() {
         sunk?: Array<{ size: number; cells: number[][] }>;
         gameOver: boolean;
         winner?: { id: number; name: string };
+        abilityUsage?: typeof DEFAULT_ABILITY_USAGE;
+        turnKills?: number;
       }>(
         GameController.useAbility.post(),
         { player_id: playerId.value, type, payload }
       );
 
+      let anyHit = false;
       for (const s of data.shots) {
         const { x, y, result } = s;
-        if (result === 'hit' || result === 'sunk') enemyBoard.value[y][x] = 2;
-        else if (result === 'miss') enemyBoard.value[y][x] = 1;
+        if (result === 'hit' || result === 'sunk') {
+          enemyBoard.value[y][x] = 2;
+          anyHit = true;
+        } else if (result === 'miss') {
+          enemyBoard.value[y][x] = 1;
+        }
+        if (result === 'sunk') {
+          anyHit = true;
+        }
       }
 
-      // Track usage
-      abilityUsage.value[type]++;
+      if (data.abilityUsage) {
+        abilityUsage.value = data.abilityUsage;
+      }
+      if (typeof data.turnKills === 'number') {
+        turnKills.value = data.turnKills;
+      }
 
       const hits = data.shots.filter(s => s.result === 'hit' || s.result === 'sunk').length;
       const msg = type === 'plane'
@@ -246,26 +317,48 @@ export function useGameState() {
           : 'Ability: splatter';
       pushMsg(`${msg} → ${hits} hit(s)`);
 
+      if (!anyHit) {
+        myTurn.value = false;
+      }
+
       if (data.gameOver && data.winner) {
         youWon.value = data.winner.id === playerId.value;
         winnerName.value = data.winner.name;
         gameOver.value = true;
       }
     } catch (e: any) {
-      if (e?.response?.status === 409) pushMsg('Not your turn');
-      else pushMsg('Ability failed');
+      const resp: Response | undefined = e?.response;
+      if (resp) {
+        let message: string | null = null;
+        try {
+          const json = await resp.clone().json();
+          message = json?.error ?? null;
+        } catch (_) {
+          try {
+            message = await resp.clone().text();
+          } catch (_) {
+            message = null;
+          }
+        }
+        if (message) {
+          pushMsg(message);
+        } else if (resp.status === 409) {
+          pushMsg('Not your turn');
+        } else if (resp.status === 422) {
+          pushMsg('Ability input invalid');
+        } else {
+          pushMsg('Ability failed');
+        }
+      } else {
+        pushMsg('Ability failed');
+      }
     }
   }
 
   return {
     step, name, gameCode, gameId, playerId, isReady, myTurn, messages,
     myBoard, enemyBoard, enemyName, enemySunkShips, gameOver, youWon, winnerName,
-
-    // NEW: Ability & kill tracking
-    abilityUsage,
-    turnKills,
-    currentSunkCount,
-
+    abilityUsage, turnKills,
     createGame, joinGame, resetForNewGame, readyUp, fire, useAbility,
     pushMsg
   };

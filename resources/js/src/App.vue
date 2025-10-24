@@ -16,6 +16,8 @@ import { usePlacement } from '@/src/composables/placement';
 import { useAbilities } from '@/src/composables/useAbilities';
 import { useShipDrag } from '@/src/composables/useShipDrag';
 import type { PlacedShip, ShipSpec } from '@/src/types';
+import GameControllerRoutes from '@/actions/App/Http/Controllers/GameController';
+import { api } from '@/src/composables/useApi';
 
 const gs = proxyRefs(useGameState());
 
@@ -273,9 +275,32 @@ const statusMessage = computed(() => {
   }
 });
 
-function placeRandomly() {
-  placement.randomlyPlaceAll();
-  selectedSize.value = null;
+async function placeRandomly() {
+  try {
+    const body = gs.playerId ? { player_id: gs.playerId } : undefined;
+    const data = await api<{
+      board: number[][];
+      ships: Array<{ x: number; y: number; size: number; dir: 'H' | 'V' }>;
+    }>(
+      GameControllerRoutes.randomPlacement.post(),
+      body
+    );
+    if (data?.ships?.length) {
+      placement.setShips(data.ships.map(ship => ({
+        x: ship.x,
+        y: ship.y,
+        size: ship.size,
+        dir: ship.dir
+      })));
+    } else {
+      placement.randomlyPlaceAll();
+    }
+  } catch (err) {
+    console.error('[Placement] random placement failed, using local fallback', err);
+    placement.randomlyPlaceAll();
+  } finally {
+    selectedSize.value = null;
+  }
 }
 
 // === ABILITIES ===
