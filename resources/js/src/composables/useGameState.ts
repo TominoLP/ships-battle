@@ -33,6 +33,13 @@ export function useGameState() {
   // === NEW: Kill tracking ===
   const turnKills = ref(0);
 
+  if (typeof window !== 'undefined') {
+    const initialCode = new URLSearchParams(window.location.search).get('code');
+    if (initialCode) {
+      gameCode.value = initialCode;
+    }
+  }
+
   // Reset ability usage on game change
   watch(() => gameCode.value, (code) => {
     if (code && code !== lastGameCode.value) {
@@ -45,6 +52,23 @@ export function useGameState() {
   function pushMsg(msg: string) {
     messages.value.unshift(`[${new Date().toLocaleTimeString()}] ${msg}`);
   }
+
+  function updateGameUrl(stepValue: Step, code: string | null | undefined) {
+    if (typeof window === 'undefined') return;
+    const active = stepValue === 'lobby' || stepValue === 'placing' || stepValue === 'playing';
+    const basePath = '/game';
+    const target = active && code
+      ? `${basePath}?code=${encodeURIComponent(code)}`
+      : basePath;
+    const current = `${window.location.pathname}${window.location.search}`;
+    if (current !== target) {
+      window.history.replaceState({}, '', target);
+    }
+  }
+
+  watch([step, gameCode], ([stepValue, code]) => {
+    updateGameUrl(stepValue, code);
+  }, { immediate: true });
 
   async function refreshState(targetPlayerId?: number) {
     const id = targetPlayerId ?? playerId.value;
@@ -112,6 +136,9 @@ export function useGameState() {
     enemyBoard.value = Array.from({ length: 12 }, () => Array(12).fill(0));
     abilityUsage.value = { ...DEFAULT_ABILITY_USAGE };
     turnKills.value = 0;
+    gameCode.value = '';
+    gameId.value = null;
+    playerId.value = null;
   }
 
   function initSocket() {
