@@ -35,7 +35,7 @@ register.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\AuthController::login
-* @see app/Http/Controllers/AuthController.php:38
+* @see app/Http/Controllers/AuthController.php:62
 * @route '/api/auth/login'
 */
 export const login = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -50,7 +50,7 @@ login.definition = {
 
 /**
 * @see \App\Http\Controllers\AuthController::login
-* @see app/Http/Controllers/AuthController.php:38
+* @see app/Http/Controllers/AuthController.php:62
 * @route '/api/auth/login'
 */
 login.url = (options?: RouteQueryOptions) => {
@@ -59,7 +59,7 @@ login.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\AuthController::login
-* @see app/Http/Controllers/AuthController.php:38
+* @see app/Http/Controllers/AuthController.php:62
 * @route '/api/auth/login'
 */
 login.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -69,7 +69,7 @@ login.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\AuthController::logout
-* @see app/Http/Controllers/AuthController.php:61
+* @see app/Http/Controllers/AuthController.php:87
 * @route '/api/auth/logout'
 */
 export const logout = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -84,7 +84,7 @@ logout.definition = {
 
 /**
 * @see \App\Http\Controllers\AuthController::logout
-* @see app/Http/Controllers/AuthController.php:61
+* @see app/Http/Controllers/AuthController.php:87
 * @route '/api/auth/logout'
 */
 logout.url = (options?: RouteQueryOptions) => {
@@ -93,7 +93,7 @@ logout.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\AuthController::logout
-* @see app/Http/Controllers/AuthController.php:61
+* @see app/Http/Controllers/AuthController.php:87
 * @route '/api/auth/logout'
 */
 logout.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -103,7 +103,7 @@ logout.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\AuthController::me
-* @see app/Http/Controllers/AuthController.php:73
+* @see app/Http/Controllers/AuthController.php:99
 * @route '/api/auth/me'
 */
 export const me = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -118,7 +118,7 @@ me.definition = {
 
 /**
 * @see \App\Http\Controllers\AuthController::me
-* @see app/Http/Controllers/AuthController.php:73
+* @see app/Http/Controllers/AuthController.php:99
 * @route '/api/auth/me'
 */
 me.url = (options?: RouteQueryOptions) => {
@@ -127,7 +127,7 @@ me.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\AuthController::me
-* @see app/Http/Controllers/AuthController.php:73
+* @see app/Http/Controllers/AuthController.php:99
 * @route '/api/auth/me'
 */
 me.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -137,7 +137,7 @@ me.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\AuthController::me
-* @see app/Http/Controllers/AuthController.php:73
+* @see app/Http/Controllers/AuthController.php:99
 * @route '/api/auth/me'
 */
 me.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({

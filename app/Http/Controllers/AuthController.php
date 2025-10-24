@@ -12,18 +12,42 @@ class AuthController extends Controller
 {
     public function register(Request $request): JsonResponse
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:255', 'unique:users,name'],
-            'password' => ['required', 'string', 'min:6'],
-        ]);
+        $name = trim($request->string('name')->toString());
+        $password = (string)$request->input('password', '');
 
-        $name = trim($data['name']);
+        if ($name === '') {
+            return response()->json([
+                'message' => 'Bitte gib einen Namen ein.',
+                'errors' => ['name' => ['Bitte gib einen Namen ein.']],
+            ], 422);
+        }
+
+        if (mb_strlen($name) > 255) {
+            return response()->json([
+                'message' => 'Der Name ist zu lang.',
+                'errors' => ['name' => ['Der Name darf höchstens 255 Zeichen haben.']],
+            ], 422);
+        }
+
+        if (User::where('name', $name)->exists()) {
+            return response()->json([
+                'message' => 'Der Name ist bereits vergeben.',
+                'errors' => ['name' => ['Dieser Name ist bereits vergeben.']],
+            ], 422);
+        }
+
+        if (mb_strlen($password) < 6) {
+            return response()->json([
+                'message' => 'Das Passwort ist zu kurz.',
+                'errors' => ['password' => ['Das Passwort muss mindestens 6 Zeichen lang sein.']],
+            ], 422);
+        }
 
         /** @var User $user */
         $user = User::create([
             'name' => $name,
             'email' => $this->placeholderEmail($name),
-            'password' => $data['password'],
+            'password' => $password,
         ]);
 
         Auth::login($user);
@@ -37,16 +61,18 @@ class AuthController extends Controller
 
     public function login(Request $request): JsonResponse
     {
-        $credentials = $request->validate([
-            'name' => ['required', 'string'],
-            'password' => ['required', 'string'],
-        ]);
+        $name = trim($request->string('name')->toString());
+        $password = (string)$request->input('password', '');
 
-        $name = trim($credentials['name']);
-
-        if (!Auth::attempt(['name' => $name, 'password' => $credentials['password']], $request->boolean('remember'))) {
+        if ($name === '' || $password === '') {
             return response()->json([
-                'message' => 'The provided credentials are incorrect.',
+                'message' => 'Bitte gib Name und Passwort ein.',
+            ], 422);
+        }
+
+        if (!Auth::attempt(['name' => $name, 'password' => $password], $request->boolean('remember'))) {
+            return response()->json([
+                'message' => 'Name oder Passwort ist falsch.',
             ], 422);
         }
 
