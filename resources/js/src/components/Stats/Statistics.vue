@@ -161,19 +161,19 @@ function formatAccuracy(value: number | null): string {
         <dl class="space-y-2 text-sm text-slate-300">
           <div class="flex justify-between">
             <dt>Abgefeuerte Schüsse</dt>
-            <dd class="font-semibold text-rose-300">{{ enemyShots }}</dd>
+            <dd class="font-semibold text-rose-400">{{ enemyShots }}</dd>
           </div>
           <div class="flex justify-between border-t border-slate-800 pt-2">
             <dt>Treffer</dt>
-            <dd class="font-semibold text-rose-300">{{ enemyHits }}</dd>
+            <dd class="font-semibold text-rose-400">{{ enemyHits }}</dd>
           </div>
           <div class="flex justify-between border-t border-slate-800 pt-2">
             <dt>Treffgenauigkeit</dt>
-            <dd class="font-semibold text-rose-300">{{ formatAccuracy(enemyAccuracy) }}</dd>
+            <dd class="font-semibold text-rose-400">{{ formatAccuracy(enemyAccuracy) }}</dd>
           </div>
           <div class="flex justify-between border-t border-slate-800 pt-2">
             <dt>Deine intakten Felder</dt>
-            <dd class="font-semibold text-rose-300">{{ playerShipsRemaining }}</dd>
+            <dd class="font-semibold text-rose-400">{{ playerShipsRemaining }}</dd>
           </div>
         </dl>
       </div>

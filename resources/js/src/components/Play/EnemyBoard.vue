@@ -28,7 +28,7 @@ function getCellClass(cell: number, x: number, y: number) {
     return 'bg-blue-400/15 ring-2 ring-blue-400/70';
   }
   if (cell === 1) return 'bg-slate-700';
-  if (cell === 2) return 'bg-red-600/80';
+  if (cell === 2) return 'bg-rose-500/80';
   if (cell === 0)
     return props.disabled
       ? 'bg-slate-800/50'

@@ -20,7 +20,7 @@ const copyToClip = () => {
     </p>
     <p v-if="!isReady" class="text-slate-400">Warte bis ein Gegner dem Spiel beitritt …</p>
     <p v-else class="flex justify-center items-center gap-2">
-      <span class="w-6 h-6 border-2 border-emerald-400 border-t-transparent rounded-full animate-spin"></span>
+      <span class="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></span>
     </p>
   </div>
 </template>

@@ -100,9 +100,9 @@ defineExpose({ getCellFromPoint, setExternalHover, clearHover, getHoverCell });
     ref="baseRef"
     :board="board"
     :getCellClass="(cell:number,x:number,y:number) => {
-      if (cell === 4) return 'bg-red-600/80'
+      if (cell === 4) return 'bg-rose-500/80'
       if (cell === 3) return 'bg-slate-700'
-      if (cell === 1) return 'bg-emerald-500/80 border-emerald-400/50 shadow-[inset_0_0_0_1px_rgba(16,185,129,.35),0_6px_16px_-6px_rgba(16,185,129,.35)]'
+      if (cell === 1) return 'bg-emerald-500/80 border-emerald-500/50 shadow-[inset_0_0_0_1px_rgba(16,185,129,.35),0_6px_16px_-6px_rgba(16,185,129,.35)]'
       if (cell === 0 && inPreview(x,y)) {
         return previewIsValid()
           ? 'bg-blue-400/15 ring-2 ring-blue-400/70'
