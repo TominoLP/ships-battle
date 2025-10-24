@@ -166,7 +166,11 @@ async function submit() {
       </div>
 
       <label v-if="mode === 'login'" class="flex items-center gap-2 text-sm text-slate-300">
-        <input v-model="form.remember" type="checkbox" class="h-4 w-4 rounded border-slate-600 bg-slate-700 text-blue-500 focus:ring-blue-400" />
+        <input
+          v-model="form.remember"
+          type="checkbox"
+          class="h-4 w-4 rounded border-slate-600 text-blue-500 focus:ring-blue-400 appearance-none bg-slate-700 checked:bg-blue-500 checked:border-blue-500"
+        />
         Angemeldet bleiben
       </label>
 
