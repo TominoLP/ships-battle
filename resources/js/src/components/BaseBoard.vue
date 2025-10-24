@@ -93,11 +93,11 @@ defineExpose({
                 v-for="(cell, x) in row"
                 :key="x"
                 data-cell="1"
-              :class="getCellClass(cell, x, y)"
-              class="relative h-8 w-8 sm:h-9 sm:w-9 rounded-lg transition-all duration-150 border-none"
-              @click="onCellClick && onCellClick(x, y, cell); emit('cellClick', x, y)"
-              @mouseenter="onCellHover && onCellHover(x, y, cell)"
-              @pointerdown="onCellPointerDown && onCellPointerDown($event, x, y, cell)"
+                :class="getCellClass(cell, x, y)"
+                class="relative h-8 w-8 sm:h-9 sm:w-9 rounded-lg transition-all duration-150 border-none"
+                @click="onCellClick && onCellClick(x, y, cell); emit('cellClick', x, y)"
+                @mouseenter="onCellHover && onCellHover(x, y, cell)"
+                @pointerdown="onCellPointerDown && onCellPointerDown($event, x, y, cell)"
               />
             </div>
           </div>
@@ -108,3 +108,22 @@ defineExpose({
     <p v-if="showHint" class="text-center text-xs text-slate-400">{{ showHint }}</p>
   </div>
 </template>
+
+<style>
+.circle {
+  position: relative;
+}
+
+.circle::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  background: var(--color-slate-600, #aaa);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+</style>

@@ -7,7 +7,7 @@ type Cell = { x: number; y: number };
 const props = defineProps<{
   enemyBoard: number[][];
   disabled?: boolean;
-  previewCells?: Cell[]; // optional overlay preview
+  previewCells?: Cell[];
 }>();
 
 const emit = defineEmits<{
@@ -27,7 +27,7 @@ function getCellClass(cell: number, x: number, y: number) {
   if (isPreview(x, y)) {
     return 'bg-blue-400/15 ring-2 ring-blue-400/70';
   }
-  if (cell === 1) return 'bg-slate-700';
+  if (cell === 1) return 'bg-slate-700 circle';
   if (cell === 2) return 'bg-rose-500/80';
   if (cell === 0)
     return props.disabled
@@ -76,4 +76,5 @@ defineExpose({ getGridEl, getCellFromPoint });
   0%, 100% { opacity: .45; }
   50% { opacity: .9; }
 }
+
 </style>
