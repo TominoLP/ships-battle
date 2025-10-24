@@ -463,21 +463,28 @@ async function onEnemyCellClick(x: number, y: number) {
           <AuthPanel />
         </div>
         <template v-else>
-          <div class="flex flex-col">
-            <div class="mb-6 flex justify-end">
-              <div class="flex items-center gap-3 rounded-full border border-slate-700 bg-slate-900/70 px-4 py-2 shadow-md">
-                <div class="text-sm text-slate-300">
-                  Eingeloggt als <span class="font-semibold text-slate-100">{{ accountName }}</span>
+          <div class="flex flex-col gap-6">
+            <div class="relative mb-6 text-center">
+              <div class="absolute right-0 top-0 flex justify-end">
+                <div class="inline-flex items-center gap-3 rounded-full border border-slate-700 bg-slate-900/80 px-4 py-2 shadow-md">
+                  <span class="text-sm text-slate-300">Angemeldet als <span class="font-semibold">{{ accountName }}</span></span>
+                  <button class="text-sm text-red-400 hover:text-red-300" type="button" @click="handleLogout">
+                    Abmelden
+                  </button>
                 </div>
-                <button class="text-sm text-red-400 hover:text-red-300" type="button" @click="handleLogout">
-                  Abmelden
-                </button>
+                <a
+                  href="https://github.com/TominoLP/ships-battle"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="GitHub: ships-battle"
+                  class="inline-flex items-center gap-3 rounded-full border border-slate-700 ml-3 bg-slate-900/80 px-4 py-2 shadow-md hover:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-blue-500/60"
+                >
+                  <i class="fa-brands fa-github"></i>
+                  <span class="sr-only">GitHub: ships-battle</span>
+                </a>
               </div>
-            </div>
-  
-            <!-- Header -->
-            <div class="mb-8 text-center">
-              <div class="mb-2 flex items-center justify-center gap-3">
+
+              <div class="flex items-center justify-center gap-3">
                 <svg class="h-10 w-10 text-blue-400" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
                      stroke-width="2" viewBox="0 0 24 24">
                   <circle cx="12" cy="5" r="2.5" />
@@ -488,7 +495,8 @@ async function onEnemyCellClick(x: number, y: number) {
                 </svg>
                 <h1 class="text-3xl font-semibold text-blue-400">Schiffeversenken</h1>
               </div>
-              <p class="text-slate-400">{{ statusMessage }}</p>
+
+              <p class="mt-2 text-slate-400">{{ statusMessage }}</p>
             </div>
           </div>
 
