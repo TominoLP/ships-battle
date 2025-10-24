@@ -35,7 +35,7 @@ class GameController extends Controller
             return response()->json(['error' => 'Authentication required'], 401);
         }
 
-        $game = Game::where('code', $request->code)->firstOrFail();
+        $game = Game::where('code', $request->code)->where('status', '!=', Game::STATUS_COMPLETED)->firstOrRFail();
 
         $name = trim((string)($user->name ?? ''));
         if ($name === '') {
