@@ -35,7 +35,7 @@ class GameController extends Controller
             return response()->json(['error' => 'Authentication required'], 401);
         }
 
-        $game = Game::where('code', $request->code)->where('status', '!=', Game::STATUS_COMPLETED)->firstOrRFail();
+        $game = Game::where('code', $request->code)->where('status', '!=', Game::STATUS_COMPLETED)->firstOrFail();
 
         $name = trim((string)($user->name ?? ''));
         if ($name === '') {
@@ -344,6 +344,7 @@ class GameController extends Controller
 
             $mapping = [];
 
+            $newPlayers = [];
             foreach ($players as $index => $original) {
                 $newPlayer = Player::create([
                     'user_id' => $original->user_id,
@@ -352,7 +353,7 @@ class GameController extends Controller
                     'is_turn' => $index === 0,
                     'is_ready' => false,
                 ]);
-
+                $newPlayers[] = $newPlayer;
                 $mapping[] = [
                     'old_player_id' => $original->id,
                     'new_player_id' => $newPlayer->id,
@@ -360,6 +361,21 @@ class GameController extends Controller
                     'user_id' => $newPlayer->user_id,
                     'is_turn' => (bool)$newPlayer->is_turn,
                 ];
+            }
+
+            if (!empty($newPlayers)) {
+                $starter = $newPlayers[0];
+                foreach ($newPlayers as $candidate) {
+                    $candidate->forceFill([
+                        'is_turn' => $candidate->id === $starter->id,
+                        'turn_kills' => 0,
+                        'ability_usage' => Player::defaultAbilityUsage(),
+                    ])->save();
+                }
+                $mapping = array_map(static function (array $row) use ($starter) {
+                    $row['is_turn'] = $row['new_player_id'] === $starter->id;
+                    return $row;
+                }, $mapping);
             }
 
             $player->update(['wants_rematch' => false]);

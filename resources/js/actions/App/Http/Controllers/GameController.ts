@@ -171,7 +171,7 @@ useAbility.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\GameController::randomPlacement
-* @see app/Http/Controllers/GameController.php:389
+* @see app/Http/Controllers/GameController.php:405
 * @route '/api/game/placement/random'
 */
 export const randomPlacement = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -186,7 +186,7 @@ randomPlacement.definition = {
 
 /**
 * @see \App\Http\Controllers\GameController::randomPlacement
-* @see app/Http/Controllers/GameController.php:389
+* @see app/Http/Controllers/GameController.php:405
 * @route '/api/game/placement/random'
 */
 randomPlacement.url = (options?: RouteQueryOptions) => {
@@ -195,7 +195,7 @@ randomPlacement.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\GameController::randomPlacement
-* @see app/Http/Controllers/GameController.php:389
+* @see app/Http/Controllers/GameController.php:405
 * @route '/api/game/placement/random'
 */
 randomPlacement.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -239,7 +239,7 @@ rematch.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\GameController::state
-* @see app/Http/Controllers/GameController.php:417
+* @see app/Http/Controllers/GameController.php:433
 * @route '/api/game/state/{player}'
 */
 export const state = (args: { player: number | { id: number } } | [player: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -254,7 +254,7 @@ state.definition = {
 
 /**
 * @see \App\Http\Controllers\GameController::state
-* @see app/Http/Controllers/GameController.php:417
+* @see app/Http/Controllers/GameController.php:433
 * @route '/api/game/state/{player}'
 */
 state.url = (args: { player: number | { id: number } } | [player: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -287,7 +287,7 @@ state.url = (args: { player: number | { id: number } } | [player: number | { id:
 
 /**
 * @see \App\Http\Controllers\GameController::state
-* @see app/Http/Controllers/GameController.php:417
+* @see app/Http/Controllers/GameController.php:433
 * @route '/api/game/state/{player}'
 */
 state.get = (args: { player: number | { id: number } } | [player: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -297,7 +297,7 @@ state.get = (args: { player: number | { id: number } } | [player: number | { id:
 
 /**
 * @see \App\Http\Controllers\GameController::state
-* @see app/Http/Controllers/GameController.php:417
+* @see app/Http/Controllers/GameController.php:433
 * @route '/api/game/state/{player}'
 */
 state.head = (args: { player: number | { id: number } } | [player: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
