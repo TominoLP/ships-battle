@@ -34,6 +34,7 @@ class Player extends Model
         'ships',
         'ability_usage',
         'turn_kills',
+        'wants_rematch',
     ];
 
     protected $casts = [
@@ -43,6 +44,7 @@ class Player extends Model
         'is_turn' => 'boolean',
         'ability_usage' => 'array',
         'turn_kills' => 'integer',
+        'wants_rematch' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

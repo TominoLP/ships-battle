@@ -4,6 +4,26 @@ import { api } from '@/src/composables/useApi';
 import type { PlacedShip, Step } from '@/src/types';
 import { useGameSocket } from '@/src/composables/useGameSocket';
 
+type RematchMapping = {
+  old_player_id: number;
+  new_player_id: number;
+  name: string;
+  user_id: number | null;
+  is_turn: boolean;
+};
+
+type RematchResponse = {
+  status: 'waiting' | 'ready';
+  message?: string;
+  game?: { id: number; code: string };
+  player?: RematchMapping;
+};
+
+type RematchEventPayload = {
+  next?: { id: number; code: string };
+  players?: RematchMapping[];
+};
+
 export function useGameState() {
   const step = ref<Step>('join');
   const gameCode = ref('');
@@ -13,8 +33,10 @@ export function useGameState() {
   const myTurn = ref(false);
   const messages = ref<string[]>([]);
 
-  const myBoard = ref<number[][]>(Array.from({ length: 12 }, () => Array(12).fill(0)));
-  const enemyBoard = ref<number[][]>(Array.from({ length: 12 }, () => Array(12).fill(0)));
+  const createEmptyBoard = () => Array.from({ length: 12 }, () => Array(12).fill(0));
+
+  const myBoard = ref<number[][]>(createEmptyBoard());
+  const enemyBoard = ref<number[][]>(createEmptyBoard());
   const enemySunkShips = ref<number[]>([]);
   const enemyName = ref('');
 
@@ -31,6 +53,10 @@ export function useGameState() {
 
   // === NEW: Kill tracking ===
   const turnKills = ref(0);
+
+  // === Rematch flow ===
+  const rematchState = ref<'idle' | 'waiting' | 'ready'>('idle');
+  const rematchError = ref<string | null>(null);
 
   if (typeof window !== 'undefined') {
     const initialCode = new URLSearchParams(window.location.search).get('code');
@@ -111,6 +137,8 @@ export function useGameState() {
     initSocket();
     await refreshState(data.player_id);
     step.value = 'lobby';
+    rematchState.value = 'idle';
+    rematchError.value = null;
   }
 
   async function joinGame() {
@@ -123,6 +151,8 @@ export function useGameState() {
     initSocket();
     await refreshState(data.player_id);
     step.value = 'placing';
+    rematchState.value = 'idle';
+    rematchError.value = null;
   }
 
   function resetForNewGame() {
@@ -131,12 +161,116 @@ export function useGameState() {
     youWon.value = null;
     winnerName.value = '';
     isReady.value = false;
-    enemyBoard.value = Array.from({ length: 12 }, () => Array(12).fill(0));
+    enemyBoard.value = createEmptyBoard();
+    myBoard.value = createEmptyBoard();
+    enemySunkShips.value = [];
     abilityUsage.value = { ...DEFAULT_ABILITY_USAGE };
     turnKills.value = 0;
+    rematchState.value = 'idle';
+    rematchError.value = null;
+    messages.value = [];
     gameCode.value = '';
     gameId.value = null;
     playerId.value = null;
+  }
+
+  function applyRematch(nextGame: { id: number; code: string }, mapping: RematchMapping) {
+    if (!nextGame?.id || !nextGame?.code || !mapping?.new_player_id) {
+      return;
+    }
+
+    if (socket.value) {
+      try {
+        socket.value.leave?.();
+      } catch (err) {
+        console.warn('[GameState] Failed to leave previous channel', err);
+      }
+    }
+
+    socket.value = null;
+
+    messages.value = [];
+    myBoard.value = createEmptyBoard();
+    enemyBoard.value = createEmptyBoard();
+    enemySunkShips.value = [];
+    abilityUsage.value = { ...DEFAULT_ABILITY_USAGE };
+    turnKills.value = 0;
+    gameOver.value = false;
+    youWon.value = null;
+    winnerName.value = '';
+    rematchState.value = 'idle';
+    rematchError.value = null;
+
+    gameId.value = nextGame.id;
+    gameCode.value = nextGame.code;
+    playerId.value = mapping.new_player_id;
+    myTurn.value = Boolean(mapping.is_turn);
+    isReady.value = false;
+    step.value = 'placing';
+
+    pushMsg('Rematch gestartet – neues Spiel bereit');
+
+    initSocket();
+    void refreshState(mapping.new_player_id);
+  }
+
+  function handleRematchReady(payload: RematchEventPayload) {
+    if (!payload?.players || !Array.isArray(payload.players)) {
+      return;
+    }
+    const mapping = payload.players.find((entry) => entry.old_player_id === playerId.value);
+    if (!mapping) return;
+    if (!payload.next?.id || !payload.next?.code) return;
+    pushMsg('Rematch angenommen – wechsel zum neuen Spiel');
+    applyRematch(payload.next, mapping);
+  }
+
+  async function requestRematch() {
+    if (!playerId.value) return;
+    rematchError.value = null;
+    rematchState.value = 'waiting';
+
+    try {
+      const data = await api<RematchResponse>(
+        GameController.rematch.post(),
+        { player_id: playerId.value }
+      );
+
+      if (data.status === 'waiting') {
+        rematchState.value = 'waiting';
+        pushMsg('Rematch angefragt – warte auf Gegner...');
+        return;
+      }
+
+      if (data.status === 'ready' && data.game && data.player) {
+        rematchState.value = 'ready';
+        pushMsg('Rematch bestätigt – neues Spiel startet');
+        applyRematch(data.game, data.player);
+        return;
+      }
+
+      rematchState.value = 'idle';
+    } catch (e: any) {
+      rematchState.value = 'idle';
+      let message = 'Rematch fehlgeschlagen';
+      const resp: Response | undefined = e?.response;
+      if (resp) {
+        try {
+          const json = await resp.clone().json();
+          message = (json?.error as string) ?? message;
+        } catch (_) {
+          try {
+            message = await resp.clone().text();
+          } catch (_) {
+            message = e?.message ?? message;
+          }
+        }
+      } else if (e?.message) {
+        message = e.message;
+      }
+      rematchError.value = message;
+      pushMsg(message);
+    }
   }
 
   function initSocket() {
@@ -152,6 +286,8 @@ export function useGameState() {
       youWon.value = won;
       winnerName.value = winner.name;
       gameOver.value = true;
+      rematchState.value = 'idle';
+      rematchError.value = null;
       pushMsg(won ? 'You won.' : `You lost. Winner: ${winner.name}`);
     });
 
@@ -202,6 +338,10 @@ export function useGameState() {
       enemyName.value = players.find((p: any) => p.id !== playerId.value)?.name || '';
       myTurn.value = current?.id === playerId.value;
       void refreshState(playerId.value ?? undefined);
+    });
+
+    socket.value.on('rematch_ready', (payload: RematchEventPayload) => {
+      handleRematchReady(payload);
     });
   }
 
@@ -383,8 +523,8 @@ export function useGameState() {
   return {
     step, gameCode, gameId, playerId, isReady, myTurn, messages,
     myBoard, enemyBoard, enemyName, enemySunkShips, gameOver, youWon, winnerName,
-    abilityUsage, turnKills,
-    createGame, joinGame, resetForNewGame, readyUp, fire, useAbility,
+    abilityUsage, turnKills, rematchState, rematchError,
+    createGame, joinGame, resetForNewGame, readyUp, fire, useAbility, requestRematch,
     pushMsg
   };
 }

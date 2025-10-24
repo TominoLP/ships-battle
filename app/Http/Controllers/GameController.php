@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\GameCreated;
 use App\Events\PlayerJoined;
 use App\Events\PlayerReady;
+use App\Events\RematchReady;
 use App\Models\Game;
 use App\Models\Player;
 use App\Services\BattleService;
@@ -260,6 +261,122 @@ class GameController extends Controller
             } catch (\RuntimeException $e) {
                 return response()->json(['error' => $e->getMessage()], 409);
             }
+        });
+
+        if ($payload instanceof JsonResponse) {
+            return $payload;
+        }
+
+        return response()->json($payload);
+    }
+
+    public function rematch(Request $request): JsonResponse
+    {
+        $request->validate([
+            'player_id' => 'required|integer|exists:players,id',
+        ]);
+
+        $userId = $request->user()?->id;
+        if (!$userId) {
+            return response()->json(['error' => 'Authentication required'], 401);
+        }
+
+        $payload = DB::transaction(function () use ($request, $userId) {
+            /** @var Player $player */
+            $player = Player::lockForUpdate()->findOrFail($request->integer('player_id'));
+
+            if ($player->user_id !== $userId) {
+                return response()->json(['error' => 'Forbidden'], 403);
+            }
+
+            /** @var Game|null $game */
+            $game = Game::lockForUpdate()->find($player->game_id);
+            if (!$game) {
+                return response()->json(['error' => 'Game not found'], 404);
+            }
+
+            if ($game->status !== Game::STATUS_COMPLETED) {
+                return response()->json(['error' => 'Game still in progress'], 409);
+            }
+
+            if (!$player->wants_rematch) {
+                $player->update(['wants_rematch' => true]);
+            }
+
+            /** @var Player|null $enemy */
+            $enemy = Player::where('game_id', $player->game_id)
+                ->where('id', '<>', $player->id)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$enemy) {
+                return [
+                    'status' => 'waiting',
+                    'message' => 'Waiting for an opponent',
+                ];
+            }
+
+            if (!$enemy->wants_rematch) {
+                return [
+                    'status' => 'waiting',
+                    'message' => 'Waiting for opponent to accept rematch',
+                ];
+            }
+
+            $players = [$player, $enemy];
+
+            if ($game->winner_player_id) {
+                usort($players, static function (Player $a, Player $b) use ($game): int {
+                    if ($a->id === $game->winner_player_id && $b->id !== $game->winner_player_id) {
+                        return -1;
+                    }
+                    if ($b->id === $game->winner_player_id && $a->id !== $game->winner_player_id) {
+                        return 1;
+                    }
+                    return $a->id <=> $b->id;
+                });
+            } else {
+                usort($players, static fn(Player $a, Player $b): int => $a->id <=> $b->id);
+            }
+            
+            $newGame = Game::create();
+            $newGame->update(['status' => Game::STATUS_CREATING]);
+
+            $mapping = [];
+
+            foreach ($players as $index => $original) {
+                $newPlayer = Player::create([
+                    'user_id' => $original->user_id,
+                    'game_id' => $newGame->id,
+                    'name' => $original->name,
+                    'is_turn' => $index === 0,
+                    'is_ready' => false,
+                ]);
+
+                $mapping[] = [
+                    'old_player_id' => $original->id,
+                    'new_player_id' => $newPlayer->id,
+                    'name' => $newPlayer->name,
+                    'user_id' => $newPlayer->user_id,
+                    'is_turn' => (bool)$newPlayer->is_turn,
+                ];
+            }
+
+            $player->update(['wants_rematch' => false]);
+            $enemy->update(['wants_rematch' => false]);
+
+            broadcast(new RematchReady($game, $newGame, $mapping));
+
+            $current = collect($mapping)->firstWhere('old_player_id', $player->id);
+
+            return [
+                'status' => 'ready',
+                'game' => [
+                    'id' => $newGame->id,
+                    'code' => $newGame->code,
+                ],
+                'player' => $current,
+            ];
         });
 
         if ($payload instanceof JsonResponse) {

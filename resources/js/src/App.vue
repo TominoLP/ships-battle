@@ -71,6 +71,12 @@ const placementBoardRef = ref<any>(null);
 const draggingShip = ref<PlacedShip | null>(null);
 const originalShip = ref<PlacedShip | null>(null);
 
+watch(() => gs.gameId, (current, previous) => {
+  if (current !== previous) {
+    resetPlacementState();
+  }
+});
+
 // Abilities composable
 const abilities = useAbilities(12);
 
@@ -126,10 +132,29 @@ function closePopup() {
   popup.value.open = false;
 }
 
+function handleGameOverClose() {
+  gs.resetForNewGame();
+  resetPlacementState();
+}
+
+function handleRematchRequest() {
+  void gs.requestRematch();
+}
+
 // Selection (type-based for placing)
 const selectedSize = ref<number | null>(null);
 function pickSize(size: number | null) {
   selectedSize.value = size;
+}
+
+function resetPlacementState() {
+  placement.reset();
+  abilities.reset();
+  selectedSize.value = null;
+  draggingShip.value = null;
+  originalShip.value = null;
+  shipDrag.cleanup();
+  showMyBoard.value = false;
 }
 
 const orientationStr = computed<'H' | 'V'>(() =>
@@ -711,7 +736,10 @@ async function onEnemyCellClick(x: number, y: number) {
             :open="gs.gameOver"
             :winnerName="gs.winnerName"
             :youWon="gs.youWon"
-            @close="gs.resetForNewGame"
+            :rematchState="gs.rematchState"
+            :rematchError="gs.rematchError"
+            @close="handleGameOverClose"
+            @rematch="handleRematchRequest"
           />
         </template>
       </template>
