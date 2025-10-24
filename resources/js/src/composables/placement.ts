@@ -78,6 +78,36 @@ export function usePlacement(boardSize = 12, fleet: ShipSpec[]) {
   const allPlaced = computed(() => nextIndex.value >= palette.length);
   const nextSize = computed(() => palette[nextIndex.value]);
 
+  function findShipAt(x: number, y: number): PlacedShip | null {
+    return placedShips.value.find(ship => {
+      for (let i = 0; i < ship.size; i++) {
+        const sx = ship.dir === 'H' ? ship.x + i : ship.x;
+        const sy = ship.dir === 'V' ? ship.y + i : ship.y;
+        if (sx === x && sy === y) return true;
+      }
+      return false;
+    }) ?? null;
+  }
+
+  function removeShip(target: PlacedShip): PlacedShip | null {
+    const index = placedShips.value.findIndex(ship =>
+      ship.x === target.x &&
+      ship.y === target.y &&
+      ship.size === target.size &&
+      ship.dir === target.dir
+    );
+    if (index === -1) return null;
+
+    const [ship] = placedShips.value.splice(index, 1);
+    for (let i = 0; i < ship.size; i++) {
+      const cx = ship.dir === 'H' ? ship.x + i : ship.x;
+      const cy = ship.dir === 'V' ? ship.y + i : ship.y;
+      board.value[cy][cx] = 0;
+    }
+    nextIndex.value = Math.max(0, nextIndex.value - 1);
+    return ship;
+  }
+
   return {
     board,
     canPlace,
@@ -90,6 +120,8 @@ export function usePlacement(boardSize = 12, fleet: ShipSpec[]) {
     nextIndex,
     orientation,
     placedShips,
-    palette
+    palette,
+    findShipAt,
+    removeShip
   };
 }

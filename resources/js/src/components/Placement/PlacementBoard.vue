@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed, ref, unref } from 'vue';
-import type { Dir } from '@/src/types';
+import type { Dir, PlacedShip } from '@/src/types';
 import BaseBoard from '@/src/components/BaseBoard.vue';
 
 const props = defineProps<{
@@ -9,6 +9,11 @@ const props = defineProps<{
   applyShip: (x: number, y: number, size: number, dir: Dir) => void
   nextSize?: number | null
   orientation: Dir
+  placedShips: PlacedShip[]
+}>();
+
+const emit = defineEmits<{
+  (e: 'shipDragStart', payload: { ship: PlacedShip; event: PointerEvent }): void
 }>();
 
 const board = computed(() => unref(props.board));
@@ -62,6 +67,25 @@ function handleCellClick(x: number, y: number, cell: number) {
   clearHover();
 }
 
+function cellBelongsToShip(ship: PlacedShip, x: number, y: number) {
+  for (let i = 0; i < ship.size; i++) {
+    const cx = ship.dir === 'H' ? ship.x + i : ship.x;
+    const cy = ship.dir === 'V' ? ship.y + i : ship.y;
+    if (cx === x && cy === y) return true;
+  }
+  return false;
+}
+
+function handlePointerDown(ev: PointerEvent, x: number, y: number, cell: number) {
+  if (cell !== 1) return;
+  if (ev.button !== 0) return;
+  const ship = props.placedShips.find(s => cellBelongsToShip(s, x, y));
+  if (!ship) return;
+  ev.preventDefault();
+  ev.stopPropagation();
+  emit('shipDragStart', { ship, event: ev });
+}
+
 function getCellFromPoint(clientX: number, clientY: number) {
   const base = baseRef.value as any;
   if (!base?.getCellFromPoint) return null;
@@ -89,6 +113,7 @@ defineExpose({ getCellFromPoint, setExternalHover, clearHover, getHoverCell });
     }"
     :onCellHover="handleCellHover"
     :onCellClick="handleCellClick"
+    :onCellPointerDown="handlePointerDown"
     @mouseleave="clearHover"
     showHint="Ziehe das nächste Schiff auf das Board. Blau = gültig, Rot = ungültig. Drücke R zum Drehen."
   />

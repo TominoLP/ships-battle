@@ -10,6 +10,7 @@ const props = defineProps<{
   onCellClick?: (x: number, y: number, cell: number) => void
   /** NEW: let parents receive hover events */
   onCellHover?: (x: number, y: number, cell: number) => void
+  onCellPointerDown?: (ev: PointerEvent, x: number, y: number, cell: number) => void
 }>();
 
 const emit = defineEmits<{ (e: 'cellClick', x: number, y: number): void }>();
@@ -96,6 +97,7 @@ defineExpose({
               class="relative h-8 w-8 sm:h-9 sm:w-9 rounded-lg transition-all duration-150 border-none"
               @click="onCellClick && onCellClick(x, y, cell); emit('cellClick', x, y)"
               @mouseenter="onCellHover && onCellHover(x, y, cell)"
+              @pointerdown="onCellPointerDown && onCellPointerDown($event, x, y, cell)"
               />
             </div>
           </div>

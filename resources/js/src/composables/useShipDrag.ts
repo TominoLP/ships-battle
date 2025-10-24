@@ -64,7 +64,8 @@ export function useShipDrag() {
     size: number,
     orientation: 'H' | 'V',
     onMove: (x: number, y: number) => void,
-    onEnd: (x: number, y: number) => void
+    onEnd: (x: number, y: number) => void,
+    onCancel?: () => void
   ) {
     // Release capture and blur
     const target = ev.currentTarget as HTMLElement | null;
@@ -100,6 +101,7 @@ export function useShipDrag() {
       const hover = boardRef.value?.getHoverCell?.();
       const pt = hover ?? boardRef.value?.getCellFromPoint?.(e.clientX, e.clientY);
       if (pt) onEnd(pt.x, pt.y);
+      else if (onCancel) onCancel();
       cleanup();
     };
 

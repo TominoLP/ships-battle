@@ -14,7 +14,8 @@ import AbilityPanel from '@/src/components/AbilityPanel.vue';
 import { useGameState } from '@/src/composables/useGameState';
 import { usePlacement } from '@/src/composables/placement';
 import { useAbilities } from '@/src/composables/useAbilities';
-import type { ShipSpec } from '@/src/types';
+import { useShipDrag } from '@/src/composables/useShipDrag';
+import type { PlacedShip, ShipSpec } from '@/src/types';
 
 const gs = proxyRefs(useGameState());
 
@@ -40,6 +41,11 @@ const placement = usePlacement(12, fleet);
 watchEffect(() => {
   gs.myBoard = placement.board.value;
 });
+
+const shipDrag = useShipDrag();
+const placementBoardRef = ref<any>(null);
+const draggingShip = ref<PlacedShip | null>(null);
+const originalShip = ref<PlacedShip | null>(null);
 
 // Abilities composable
 const abilities = useAbilities(12);
@@ -71,6 +77,8 @@ const splatterRemaining = computed(() =>
 const bombsRemaining = computed(() =>
   Math.max(0, BOMBS_TOTAL - gs.abilityUsage.comb)
 );
+
+const isDisabled = computed(() => !placement.allPlaced.value)
 
 const planeExhausted = computed(() => planeRemaining.value === 0);
 const splatterExhausted = computed(() => splatterRemaining.value === 0);
@@ -111,6 +119,74 @@ function commitPlacement(x: number, y: number, size: number, dir: 'H' | 'V') {
   if (nowPlaced >= totalOfSize) selectedSize.value = null;
 }
 
+function startShipDrag({ ship, event }: { ship: PlacedShip; event: PointerEvent }) {
+  if (gs.step !== 'placing') return;
+
+  const removed = placement.removeShip(ship);
+  if (!removed) return;
+
+  draggingShip.value = removed;
+  originalShip.value = { ...removed };
+  selectedSize.value = removed.size;
+  placement.orientation.value = removed.dir;
+
+  const boardComponent = placementBoardRef.value;
+  shipDrag.boardRef.value = boardComponent;
+
+  const startPoint = boardComponent?.getCellFromPoint?.(event.clientX, event.clientY);
+  if (startPoint) {
+    boardComponent?.setExternalHover?.(startPoint.x, startPoint.y);
+  }
+
+  const revertToOriginal = () => {
+    if (!originalShip.value) return;
+    placement.applyShip(
+      originalShip.value?.x,
+      originalShip.value?.y,
+      originalShip.value.size,
+      originalShip.value.dir
+    );
+    placement.orientation.value = originalShip.value.dir;
+    boardComponent?.clearHover?.();
+    draggingShip.value = null;
+    originalShip.value = null;
+    selectedSize.value = null;
+    shipDrag.boardRef.value = null;
+  };
+
+  shipDrag.startDrag(
+    event,
+    removed.size,
+    removed.dir,
+    (x, y) => {
+      if (x >= 0 && y >= 0) {
+        boardComponent?.setExternalHover?.(x, y);
+      } else {
+        boardComponent?.setExternalHover?.(null, null);
+      }
+    },
+    (x, y) => {
+      const finalDir = placement.orientation.value as 'H' | 'V';
+      const size = removed.size;
+      const can = placement.canPlace(x, y, size, finalDir);
+
+      if (can) {
+        commitPlacement(x, y, size, finalDir);
+        shipDrag.boardRef.value = null;
+      } else {
+        revertToOriginal();
+        return;
+      }
+
+      draggingShip.value = null;
+      originalShip.value = null;
+      selectedSize.value = null;
+      boardComponent?.clearHover?.();
+    },
+    revertToOriginal
+  );
+}
+
 // === KEYBOARD HANDLING ===
 
 function onKeydown(e: KeyboardEvent) {
@@ -131,8 +207,19 @@ function onKeydown(e: KeyboardEvent) {
     return;
   }
 
-  // 2) Quick ship selection via number keys
-  if (gs.step === 'placing' && /^[1-4]$/.test(e.key)) {
+  // 2) Ship rotate WHILE dragging (placing step)
+  if (gs.step === 'placing' && shipDrag.isDragging.value && (e.key === 'r' || e.key === 'R')) {
+    e.preventDefault();
+    placement.orientation.value = placement.orientation.value === 'H' ? 'V' : 'H';
+    const size = selectedSize.value ?? draggingShip.value?.size ?? 0;
+    if (size > 0) {
+      shipDrag.updateGhost(size, orientationStr.value);
+    }
+    return;
+  }
+
+  // 3) Quick ship selection via number keys
+  if (gs.step === 'placing' && !shipDrag.isDragging.value && /^[1-4]$/.test(e.key)) {
     e.preventDefault();
     const idx = Number(e.key) - 1;
     const option = uiFleet.value[idx];
@@ -144,7 +231,7 @@ function onKeydown(e: KeyboardEvent) {
     return;
   }
 
-  // 2) Ship rotate during placement (click-based)
+  // 4) Ship rotate during placement (click-based)
   if (gs.step === 'placing' && (e.key === 'r' || e.key === 'R')) {
     e.preventDefault();
     placement.orientation.value = placement.orientation.value === 'H' ? 'V' : 'H';
@@ -383,34 +470,45 @@ async function onEnemyCellClick(x: number, y: number) {
               <span class="text-xs sm:text-[13px]">Zufällig platzieren</span>
             </button>
 
-            <div
-              v-if="!placement.allPlaced.value"
-              class="mt-4 w-full px-3 py-3 text-center text-xs sm:text-sm text-slate-200"
-            >
-              <template v-if="selectedSize">
-                Klicke ein freies Feld, um dieses Schiff zu platzieren. Drücke R zum Drehen, Tasten 1-4 wechseln zwischen Schiffstypen.
-              </template>
-              <template v-else>
-                Wähle links ein Schiff aus (oder drücke 1-4) und klicke anschließend auf dein Board zum Platzieren.
-              </template>
-            </div>
+            <div class="relative group inline-block w-full">
+              <button
+                :disabled="isDisabled"
+                :aria-disabled="isDisabled.toString()"
+                :aria-describedby="isDisabled ? 'ready-tooltip' : undefined"
+                class="mt-4 w-full rounded-lg border px-3 py-2 transition"
+                :class="isDisabled
+      ? 'bg-slate-800 border-slate-600 cursor-not-allowed opacity-80'
+      : 'bg-emerald-600 hover:bg-emerald-700 border-emerald-500'"
+                @click="gs.readyUp(placement.placedShips)"
+              >
+                Bereit
+              </button>
 
-            <button
-              v-else
-              class="mt-4 w-full rounded-lg border bg-emerald-600 hover:bg-emerald-700 border-b-emerald-500 px-3 py-2"
-              @click="gs.readyUp(placement.placedShips)"
-            >
-              Bereit
-            </button>
+              <!-- Tooltip (shown on wrapper hover when disabled) -->
+              <div
+                v-if="isDisabled"
+                id="ready-tooltip"
+                role="tooltip"
+                class="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full
+           hidden group-hover:block whitespace-nowrap rounded-md bg-gray-900 px-2 py-1
+           text-xs text-white shadow-lg"
+              >
+                Platziere zuerst alle Schiffe.
+                <span class="absolute left-1/2 top-full -translate-x-1/2 h-2 w-2 rotate-45 bg-gray-900"></span>
+              </div>
+            </div>
           </div>
 
           <div class="rounded-lg border border-slate-700/70 bg-slate-900/60 p-4">
             <PlacementBoard
+              ref="placementBoardRef"
               :board="placement.board.value"
               :canPlace="placement.canPlace"
               :nextSize="selectedSize ?? placement.nextSize.value"
               :orientation="placement.orientation.value"
               :applyShip="commitPlacement"
+              :placedShips="placement.placedShips.value"
+              @shipDragStart="startShipDrag"
             />
           </div>
         </div>
@@ -497,6 +595,7 @@ async function onEnemyCellClick(x: number, y: number) {
                   :nextSize="null"
                   :orientation="'H'"
                   :applyShip="() => {}"
+                  :placedShips="[]"
                 />
               </div>
             </div>
