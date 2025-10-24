@@ -1,14 +1,40 @@
 type WayfinderCall = { url: string; method: string }
 type JsonBody = Record<string, unknown> | undefined
 
-export async function api<T = unknown>(call: WayfinderCall, body?: JsonBody, init?: RequestInit): Promise<T> {
-  const method = call.method?.toUpperCase?.() ?? 'GET';
-  const headers: HeadersInit = {
+function buildHeaders(init?: RequestInit): Record<string, string> {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'X-Requested-With': 'XMLHttpRequest',
-    ...init?.headers
+    'X-Requested-With': 'XMLHttpRequest'
   };
+
+  if (init?.headers) {
+    if (init.headers instanceof Headers) {
+      init.headers.forEach((value, key) => {
+        headers[key] = value;
+      });
+    } else if (Array.isArray(init.headers)) {
+      for (const [key, value] of init.headers) {
+        headers[key] = value;
+      }
+    } else {
+      Object.assign(headers, init.headers as Record<string, string>);
+    }
+  }
+
+  if (typeof document !== 'undefined') {
+    const token = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content;
+    if (token && !headers['X-CSRF-TOKEN']) {
+      headers['X-CSRF-TOKEN'] = token;
+    }
+  }
+
+  return headers;
+}
+
+export async function api<T = unknown>(call: WayfinderCall, body?: JsonBody, init?: RequestInit): Promise<T> {
+  const method = call.method?.toUpperCase?.() ?? 'GET';
+  const headers = buildHeaders(init);
   const res = await fetch(call.url, {
     method,
     headers,

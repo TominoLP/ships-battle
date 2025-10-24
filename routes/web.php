@@ -1,7 +1,27 @@
 <?php
 
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\GameController;
 use Illuminate\Support\Facades\Route;
 
+Route::view('/', 'app');
+Route::view('/game', 'app');
 
-Route::get('/', fn() => view('app'));
-Route::get('/game', fn() => view('app'));
+Route::prefix('api')->group(function () {
+    Route::prefix('auth')->group(function () {
+        Route::post('/register', [AuthController::class, 'register']);
+        Route::post('/login', [AuthController::class, 'login']);
+        Route::post('/logout', [AuthController::class, 'logout']);
+        Route::get('/me', [AuthController::class, 'me']);
+    });
+
+    Route::middleware('auth')->prefix('game')->group(function () {
+        Route::post('/create', [GameController::class, 'create']);
+        Route::post('/join', [GameController::class, 'join']);
+        Route::post('/shoot', [GameController::class, 'shoot']);
+        Route::post('/place-ships', [GameController::class, 'placeShips']);
+        Route::post('/ability', [GameController::class, 'useAbility']);
+        Route::post('/placement/random', [GameController::class, 'randomPlacement']);
+        Route::get('/state/{player}', [GameController::class, 'state']);
+    });
+});

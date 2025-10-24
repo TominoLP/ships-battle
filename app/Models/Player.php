@@ -25,6 +25,7 @@ use Illuminate\Support\Carbon;
 class Player extends Model
 {
     protected $fillable = [
+        'user_id',
         'game_id',
         'name',
         'board',
@@ -97,6 +98,11 @@ class Player extends Model
     public function game(): BelongsTo
     {
         return $this->belongsTo(Game::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function getHitsAttribute(): int

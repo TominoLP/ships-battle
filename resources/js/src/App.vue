@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, onBeforeUnmount, onMounted, proxyRefs, ref, watchEffect } from 'vue';
+import { computed, onBeforeUnmount, onMounted, proxyRefs, ref, watch, watchEffect } from 'vue';
 import CreatePanel from '@/src/components/Join/CreatePanel.vue';
 import LobbyPanel from '@/src/components/LobbyPanel.vue';
 import PlacementBoard from '@/src/components/Placement/PlacementBoard.vue';
@@ -10,6 +10,7 @@ import ActiveShips from '@/src/components/Placement/ActiveShips.vue';
 import Statistics from '@/src/components/Stats/Statistics.vue';
 import EnemyShips from '@/src/components/Placement/EnemyShips.vue';
 import AbilityPanel from '@/src/components/AbilityPanel.vue';
+import AuthPanel from '@/src/components/Auth/AuthPanel.vue';
 
 import { useGameState } from '@/src/composables/useGameState';
 import { usePlacement } from '@/src/composables/placement';
@@ -18,8 +19,14 @@ import { useShipDrag } from '@/src/composables/useShipDrag';
 import type { PlacedShip, ShipSpec } from '@/src/types';
 import GameControllerRoutes from '@/actions/App/Http/Controllers/GameController';
 import { api } from '@/src/composables/useApi';
+import { useAuth } from '@/src/composables/useAuth';
 
 const gs = proxyRefs(useGameState());
+const auth = useAuth();
+
+const booting = auth.booting;
+const isAuthenticated = computed(() => !!auth.user.value);
+const accountName = computed(() => auth.user.value?.name ?? '');
 
 // Fleet spec
 const fleet: ShipSpec[] = [
@@ -37,6 +44,20 @@ const de: Record<number, string> = {
 };
 
 const showMyBoard = ref(false);
+
+watch(() => auth.user.value, (user) => {
+  if (!user) {
+    gs.resetForNewGame();
+  }
+});
+
+async function handleLogout() {
+  try {
+    await auth.logout();
+  } catch (err) {
+    console.error('[Auth] Logout failed', err);
+  }
+}
 
 // Placement composable
 const placement = usePlacement(12, fleet);
@@ -267,7 +288,7 @@ const playingItems = computed(() => {
 // Status message
 const statusMessage = computed(() => {
   switch (gs.step) {
-    case 'join': return 'Gib deinen Namen ein und erstelle oder trete einem Spiel bei.';
+    case 'join': return 'Erstelle ein neues Spiel oder tritt einem Spiel mit Code bei.';
     case 'lobby': return 'Warte in der Lobby, bis beide bereit sind.';
     case 'placing': return 'Platziere deine Schiffe auf dem Spielfeld.';
     case 'playing': return gs.gameOver ? 'Spiel beendet.' : (gs.myTurn ? 'Dein Zug!' : 'Gegner am Zug …');
@@ -433,225 +454,246 @@ async function onEnemyCellClick(x: number, y: number) {
 <template>
   <div class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6 sm:p-8 text-slate-200">
     <div class="max-w-[1800px] mx-auto">
-      <!-- Header -->
-      <div class="mb-8 text-center">
-        <div class="mb-2 flex items-center justify-center gap-3">
-          <svg class="h-10 w-10 text-blue-400" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-               stroke-width="2" viewBox="0 0 24 24">
-            <circle cx="12" cy="5" r="2.5" />
-            <path d="M12 8.5v12" />
-            <path d="M7 11h10" />
-            <path d="M12 20.5c-3.5 0-6-2.5-6-5.5" />
-            <path d="M12 20.5c3.5 0 6-2.5 6-5.5" />
-          </svg>
-          <h1 class="text-3xl font-semibold text-blue-400">Schiffeversenken</h1>
-        </div>
-        <p class="text-slate-400">{{ statusMessage }}</p>
+      <div v-if="booting" class="flex min-h-[60vh] items-center justify-center text-slate-400">
+        Anmeldung wird geprüft …
       </div>
-
-      <!-- JOIN -->
-      <div v-if="gs.step === 'join'" class="mx-auto max-w-md">
-        <div class="rounded-xl border border-slate-700 bg-slate-900/80 p-6 shadow-xl">
-          <CreatePanel
-            v-model:gameCode="gs.gameCode"
-            v-model:name="gs.name"
-            @create="gs.createGame"
-            @join="gs.joinGame"
-          />
+      <template v-else>
+        <div v-if="!isAuthenticated" class="py-12">
+          <AuthPanel />
         </div>
-      </div>
-
-      <!-- LOBBY -->
-      <div v-else-if="gs.step === 'lobby'" class="mx-auto max-w-xl">
-        <div class="rounded-xl border border-slate-700 bg-slate-900/80 p-6 shadow-xl">
-          <LobbyPanel :gameCode="gs.gameCode" :isReady="gs.isReady" />
-        </div>
-      </div>
-
-      <!-- PLACING -->
-      <section v-else-if="gs.step === 'placing'"
-               class="mx-auto w-max rounded-xl border border-slate-700 bg-slate-900/80 p-4 shadow-xl">
-        <h3 class="mb-4 text-center text-slate-200">Dein Spielbrett</h3>
-
-        <div class="grid grid-cols-[minmax(220px,280px)_1fr] gap-4">
-          <div>
-            <ShipPalette
-              :fleet="uiFleet"
-              :orientation="orientationStr"
-              :placedSizes="placedSizes"
-              :selectedSize="selectedSize ?? null"
-              @pickSize="pickSize"
-              @reset="() => { placement.reset(); selectedSize = null }"
-              @toggleOrientation="placement.orientation.value = placement.orientation.value === 'H' ? 'V' : 'H'"
-              @undo="placement.removeLast"
-            />
-
-            <button
-              class="group inline-flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2 mt-2
-                     border-slate-600 bg-slate-800 hover:bg-slate-700 text-slate-200"
-              @click="placeRandomly()"
-            >
-              <i class="fa-solid fa-random text-sm"></i>
-              <span class="text-xs sm:text-[13px]">Zufällig platzieren</span>
-            </button>
-
-            <div class="relative group inline-block w-full">
-              <button
-                :disabled="isDisabled"
-                :aria-disabled="isDisabled.toString()"
-                :aria-describedby="isDisabled ? 'ready-tooltip' : undefined"
-                class="mt-4 w-full rounded-lg border px-3 py-2 transition"
-                :class="isDisabled
-      ? 'bg-slate-800 border-slate-600 cursor-not-allowed opacity-80'
-      : 'bg-emerald-600 hover:bg-emerald-700 border-emerald-500'"
-                @click="gs.readyUp(placement.placedShips)"
-              >
-                Bereit
-              </button>
-
-              <!-- Tooltip (shown on wrapper hover when disabled) -->
-              <div
-                v-if="isDisabled"
-                id="ready-tooltip"
-                role="tooltip"
-                class="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full
-           hidden group-hover:block whitespace-nowrap rounded-md bg-gray-900 px-2 py-1
-           text-xs text-white shadow-lg"
-              >
-                Platziere zuerst alle Schiffe.
-                <span class="absolute left-1/2 top-full -translate-x-1/2 h-2 w-2 rotate-45 bg-gray-900"></span>
+        <template v-else>
+          <div class="mb-6 flex justify-end">
+            <div class="flex items-center gap-3 rounded-full border border-slate-700 bg-slate-900/70 px-4 py-2 shadow-md">
+              <div class="text-sm text-slate-300">
+                Eingeloggt als <span class="font-semibold text-slate-100">{{ accountName }}</span>
               </div>
+              <button class="text-sm text-red-400 hover:text-red-300" type="button" @click="handleLogout">
+                Abmelden
+              </button>
             </div>
           </div>
 
-          <div class="rounded-lg border border-slate-700/70 bg-slate-900/60 p-4">
-            <PlacementBoard
-              ref="placementBoardRef"
-              :board="placement.board.value"
-              :canPlace="placement.canPlace"
-              :nextSize="selectedSize ?? placement.nextSize.value"
-              :orientation="placement.orientation.value"
-              :applyShip="commitPlacement"
-              :placedShips="placement.placedShips.value"
-              @shipDragStart="startShipDrag"
-            />
-          </div>
-        </div>
-      </section>
-
-      <!-- PLAYING -->
-      <div v-else class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-        <section v-if="!showMyBoard" class="lg:col-span-1 h-full rounded-xl border border-slate-700 bg-slate-900/80 p-4 shadow-xl">
-          <Statistics />
-        </section>
-
-        <section :class="['rounded-xl border border-slate-700 bg-slate-900/80 p-4 shadow-xl', showMyBoard ? 'lg:col-span-2' : 'lg:col-span-2']">
-          <div class="mb-4 flex items-center justify-between">
-            <h3 class="text-slate-200">{{ gs.enemyName }}</h3>
-            <div class="text-xs text-slate-500">Fähigkeiten auswählen und ziehen. (R dreht Flugzeug)</div>
+          <!-- Header -->
+          <div class="mb-8 text-center">
+            <div class="mb-2 flex items-center justify-center gap-3">
+              <svg class="h-10 w-10 text-blue-400" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                   stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="5" r="2.5" />
+                <path d="M12 8.5v12" />
+                <path d="M7 11h10" />
+                <path d="M12 20.5c-3.5 0-6-2.5-6-5.5" />
+                <path d="M12 20.5c3.5 0 6-2.5 6-5.5" />
+              </svg>
+              <h1 class="text-3xl font-semibold text-blue-400">Schiffeversenken</h1>
+            </div>
+            <p class="text-slate-400">{{ statusMessage }}</p>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="md:col-span-1">
-              <EnemyShips :ships="playingItems" :sunk-ships="gs.enemySunkShips" />
-
-              <AbilityPanel
-                class="mt-4"
-                :canUsePlane="canUsePlane"
-                :canUseBomb="canUseBomb"
-                :canUseSplatter="canUseSplatter"
-                :planeRemaining="planeRemaining"
-                :planeTotal="PLANE_TOTAL"
-                :bombRemaining="bombsRemaining"
-                :bombTotal="BOMBS_TOTAL"
-                :splatterRemaining="splatterRemaining"
-                :splatterTotal="SPLATTER_TOTAL"
-                :planeExhausted="planeExhausted"
-                :bombExhausted="bombsExhausted"
-                :splatterExhausted="splatterExhausted"
-                @startAbility="startAbilityFromPanel"
-                @showError="openPopup"
+          <!-- JOIN -->
+          <div v-if="gs.step === 'join'" class="mx-auto max-w-md">
+            <div class="rounded-xl border border-slate-700 bg-slate-900/80 p-6 shadow-xl">
+              <CreatePanel
+                v-model:gameCode="gs.gameCode"
+                :userName="accountName"
+                @create="gs.createGame"
+                @join="gs.joinGame"
               />
             </div>
+          </div>
 
-            <div class="md:col-span-3">
-              <div
-                :class="[
-                  'rounded-lg border bg-slate-900/60 p-4 h-full',
-                  gs.gameOver && 'pointer-events-none opacity-60',
-                  gs.myTurn ? 'border-emerald-500/50' : 'border-rose-500/50'
-                ]"
-              >
-                <EnemyBoard
-                  ref="enemyBoardRef"
-                  :disabled="boardDisabled"
-                  :enemyBoard="gs.enemyBoard"
-                  :preview-cells="previewCells"
-                  @hover="onEnemyHover"
-                  @fire="onEnemyCellClick"
+          <!-- LOBBY -->
+          <div v-else-if="gs.step === 'lobby'" class="mx-auto max-w-xl">
+            <div class="rounded-xl border border-slate-700 bg-slate-900/80 p-6 shadow-xl">
+              <LobbyPanel :gameCode="gs.gameCode" :isReady="gs.isReady" />
+            </div>
+          </div>
+
+          <!-- PLACING -->
+          <section v-else-if="gs.step === 'placing'"
+                   class="mx-auto w-max rounded-xl border border-slate-700 bg-slate-900/80 p-4 shadow-xl">
+            <h3 class="mb-4 text-center text-slate-200">Dein Spielbrett</h3>
+
+            <div class="grid grid-cols-[minmax(220px,280px)_1fr] gap-4">
+              <div>
+                <ShipPalette
+                  :fleet="uiFleet"
+                  :orientation="orientationStr"
+                  :placedSizes="placedSizes"
+                  :selectedSize="selectedSize ?? null"
+                  @pickSize="pickSize"
+                  @reset="() => { placement.reset(); selectedSize = null }"
+                  @toggleOrientation="placement.orientation.value = placement.orientation.value === 'H' ? 'V' : 'H'"
+                  @undo="placement.removeLast"
                 />
+
+                <button
+                  class="group inline-flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2 mt-2
+                         border-slate-600 bg-slate-800 hover:bg-slate-700 text-slate-200"
+                  @click="placeRandomly()"
+                >
+                  <i class="fa-solid fa-random text-sm"></i>
+                  <span class="text-xs sm:text-[13px]">Zufällig platzieren</span>
+                </button>
+
+                <div class="relative group inline-block w-full">
+                  <button
+                    :disabled="isDisabled"
+                    :aria-disabled="isDisabled.toString()"
+                    :aria-describedby="isDisabled ? 'ready-tooltip' : undefined"
+                    class="mt-4 w-full rounded-lg border px-3 py-2 transition"
+                    :class="isDisabled
+        ? 'bg-slate-800 border-slate-600 cursor-not-allowed opacity-80'
+        : 'bg-emerald-600 hover:bg-emerald-700 border-emerald-500'"
+                    @click="gs.readyUp(placement.placedShips)"
+                  >
+                    Bereit
+                  </button>
+
+                  <!-- Tooltip (shown on wrapper hover when disabled) -->
+                  <div
+                    v-if="isDisabled"
+                    id="ready-tooltip"
+                    role="tooltip"
+                    class="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full
+             hidden group-hover:block whitespace-nowrap rounded-md bg-gray-900 px-2 py-1
+             text-xs text-white shadow-lg"
+                  >
+                    Platziere zuerst alle Schiffe.
+                    <span class="absolute left-1/2 top-full -translate-x-1/2 h-2 w-2 rotate-45 bg-gray-900"></span>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        </section>
 
-        <!-- YOUR SHIPS -->
-        <section :class="['rounded-xl border border-slate-700 bg-slate-900/80 p-4 shadow-xl h-full', showMyBoard ? 'lg:col-span-2' : 'lg:col-span-1']">
-          <div class="mb-4 flex items-center justify-between">
-            <h3 class="text-slate-200">Deine Schiffe</h3>
-            <button
-              class="rounded-lg border border-slate-600 px-3 py-1 text-sm text-slate-200 hover:bg-slate-800"
-              @click="showMyBoard = !showMyBoard"
-            >
-              {{ showMyBoard ? 'Eigenes Brett ausblenden' : 'Eigenes Brett anzeigen' }}
-            </button>
-          </div>
-
-          <div :class="['grid gap-4', showMyBoard ? 'grid-cols-4' : 'grid-cols-1']">
-            <div :class="showMyBoard ? 'md:col-span-1' : ''">
-              <ActiveShips :board="gs.myBoard" :ships="playingItems" />
-            </div>
-
-            <div v-if="showMyBoard" class="md:col-span-3">
-              <div class="rounded-lg border border-slate-700/70 bg-slate-900/60 p-4 h-full">
+              <div class="rounded-lg border border-slate-700/70 bg-slate-900/60 p-4">
                 <PlacementBoard
-                  :board="gs.myBoard"
-                  :canPlace="() => false"
-                  :nextSize="null"
-                  :orientation="'H'"
-                  :applyShip="() => {}"
-                  :placedShips="[]"
+                  ref="placementBoardRef"
+                  :board="placement.board.value"
+                  :canPlace="placement.canPlace"
+                  :nextSize="selectedSize ?? placement.nextSize.value"
+                  :orientation="placement.orientation.value"
+                  :applyShip="commitPlacement"
+                  :placedShips="placement.placedShips.value"
+                  @shipDragStart="startShipDrag"
                 />
               </div>
             </div>
+          </section>
+
+          <!-- PLAYING -->
+          <div v-else class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+            <section v-if="!showMyBoard" class="lg:col-span-1 h-full rounded-xl border border-slate-700 bg-slate-900/80 p-4 shadow-xl">
+              <Statistics />
+            </section>
+
+            <section :class="['rounded-xl border border-slate-700 bg-slate-900/80 p-4 shadow-xl', showMyBoard ? 'lg:col-span-2' : 'lg:col-span-2']">
+              <div class="mb-4 flex items-center justify-between">
+                <h3 class="text-slate-200">{{ gs.enemyName }}</h3>
+                <div class="text-xs text-slate-500">Fähigkeiten auswählen und ziehen. (R dreht Flugzeug)</div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="md:col-span-1">
+                  <EnemyShips :ships="playingItems" :sunk-ships="gs.enemySunkShips" />
+
+                  <AbilityPanel
+                    class="mt-4"
+                    :canUsePlane="canUsePlane"
+                    :canUseBomb="canUseBomb"
+                    :canUseSplatter="canUseSplatter"
+                    :planeRemaining="planeRemaining"
+                    :planeTotal="PLANE_TOTAL"
+                    :bombRemaining="bombsRemaining"
+                    :bombTotal="BOMBS_TOTAL"
+                    :splatterRemaining="splatterRemaining"
+                    :splatterTotal="SPLATTER_TOTAL"
+                    :planeExhausted="planeExhausted"
+                    :bombExhausted="bombsExhausted"
+                    :splatterExhausted="splatterExhausted"
+                    @startAbility="startAbilityFromPanel"
+                    @showError="openPopup"
+                  />
+                </div>
+
+                <div class="md:col-span-3">
+                  <div
+                    :class="[
+                      'rounded-lg border bg-slate-900/60 p-4 h-full',
+                      gs.gameOver && 'pointer-events-none opacity-60',
+                      gs.myTurn ? 'border-emerald-500/50' : 'border-rose-500/50'
+                    ]"
+                  >
+                    <EnemyBoard
+                      ref="enemyBoardRef"
+                      :disabled="boardDisabled"
+                      :enemyBoard="gs.enemyBoard"
+                      :preview-cells="previewCells"
+                      @hover="onEnemyHover"
+                      @fire="onEnemyCellClick"
+                    />
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- YOUR SHIPS -->
+            <section :class="['rounded-xl border border-slate-700 bg-slate-900/80 p-4 shadow-xl h-full', showMyBoard ? 'lg:col-span-2' : 'lg:col-span-1']">
+              <div class="mb-4 flex items-center justify-between">
+                <h3 class="text-slate-200">Deine Schiffe</h3>
+                <button
+                  class="rounded-lg border border-slate-600 px-3 py-1 text-sm text-slate-200 hover:bg-slate-800"
+                  @click="showMyBoard = !showMyBoard"
+                >
+                  {{ showMyBoard ? 'Eigenes Brett ausblenden' : 'Eigenes Brett anzeigen' }}
+                </button>
+              </div>
+
+              <div :class="['grid gap-4', showMyBoard ? 'grid-cols-4' : 'grid-cols-1']">
+                <div :class="showMyBoard ? 'md:col-span-1' : ''">
+                  <ActiveShips :board="gs.myBoard" :ships="playingItems" />
+                </div>
+
+                <div v-if="showMyBoard" class="md:col-span-3">
+                  <div class="rounded-lg border border-slate-700/70 bg-slate-900/60 p-4 h-full">
+                    <PlacementBoard
+                      :board="gs.myBoard"
+                      :canPlace="() => false"
+                      :nextSize="null"
+                      :orientation="'H'"
+                      :applyShip="() => {}"
+                      :placedShips="[]"
+                    />
+                  </div>
+                </div>
+              </div>
+            </section>
           </div>
-        </section>
-      </div>
 
-      <!-- POPUP -->
-      <div
-        v-if="popup.open"
-        class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50"
-        @click.self="closePopup()"
-      >
-        <div class="w-full max-w-sm rounded-xl border border-slate-700 bg-slate-900 p-5 shadow-xl">
-          <div class="mb-2 text-lg font-semibold text-slate-100">{{ popup.title }}</div>
-          <div class="mb-4 text-sm text-slate-300">{{ popup.message }}</div>
-          <button
-            class="rounded-md border border-slate-600 px-3 py-1.5 text-slate-200 hover:bg-slate-800"
-            @click="closePopup()"
+          <!-- POPUP -->
+          <div
+            v-if="popup.open"
+            class="fixed inset-0 z-[10000] flex items-center justify-center bg-black/50"
+            @click.self="closePopup()"
           >
-            OK
-          </button>
-        </div>
-      </div>
+            <div class="w-full max-w-sm rounded-xl border border-slate-700 bg-slate-900 p-5 shadow-xl">
+              <div class="mb-2 text-lg font-semibold text-slate-100">{{ popup.title }}</div>
+              <div class="mb-4 text-sm text-slate-300">{{ popup.message }}</div>
+              <button
+                class="rounded-md border border-slate-600 px-3 py-1.5 text-slate-200 hover:bg-slate-800"
+                @click="closePopup()"
+              >
+                OK
+              </button>
+            </div>
+          </div>
 
-      <GameOverModal
-        :open="gs.gameOver"
-        :winnerName="gs.winnerName"
-        :youWon="gs.youWon"
-        @close="gs.resetForNewGame"
-      />
+          <GameOverModal
+            :open="gs.gameOver"
+            :winnerName="gs.winnerName"
+            :youWon="gs.youWon"
+            @close="gs.resetForNewGame"
+          />
+        </template>
+      </template>
     </div>
   </div>
 </template>

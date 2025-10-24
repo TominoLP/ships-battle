@@ -6,7 +6,6 @@ import { useGameSocket } from '@/src/composables/useGameSocket';
 
 export function useGameState() {
   const step = ref<Step>('join');
-  const name = ref('');
   const gameCode = ref('');
   const gameId = ref<number | null>(null);
   const playerId = ref<number | null>(null);
@@ -104,8 +103,7 @@ export function useGameState() {
 
   async function createGame() {
     const data = await api<{ game_code: string; game_id: number; player_id: number }>(
-      GameController.create.post(),
-      { name: name.value }
+      GameController.create.post()
     );
     gameCode.value = data.game_code;
     gameId.value = data.game_id;
@@ -118,7 +116,7 @@ export function useGameState() {
   async function joinGame() {
     const data = await api<{ game_id: number; player_id: number }>(
       GameController.join.post(),
-      { name: name.value, code: gameCode.value }
+      { code: gameCode.value }
     );
     gameId.value = data.game_id;
     playerId.value = data.player_id;
@@ -383,7 +381,7 @@ export function useGameState() {
   }
 
   return {
-    step, name, gameCode, gameId, playerId, isReady, myTurn, messages,
+    step, gameCode, gameId, playerId, isReady, myTurn, messages,
     myBoard, enemyBoard, enemyName, enemySunkShips, gameOver, youWon, winnerName,
     abilityUsage, turnKills,
     createGame, joinGame, resetForNewGame, readyUp, fire, useAbility,

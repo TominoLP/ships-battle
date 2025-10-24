@@ -1,5 +1,11 @@
 export type Dir = 'H' | 'V';
 
+export type AuthUser = {
+  id: number;
+  name: string;
+  email: string;
+};
+
 export type ShipSpec = {
   name: string;
   size: number;

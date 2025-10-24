@@ -26,18 +26,44 @@ class GameController extends Controller
     {
         $request->validate([
             'code' => 'required|string|exists:games,code',
-            'name' => 'required|string|max:50',
         ]);
 
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json(['error' => 'Authentication required'], 401);
+        }
+
         $game = Game::where('code', $request->code)->firstOrFail();
+
+        $name = trim((string)($user->name ?? ''));
+        if ($name === '') {
+            $name = 'Player ' . $user->id;
+        }
+
+        $existing = $game->players()
+            ->where('user_id', $user->id)
+            ->first();
+
+        if ($existing) {
+            if ($existing->name !== $name) {
+                $existing->update(['name' => $name]);
+            }
+
+            return response()->json([
+                'player_id' => $existing->id,
+                'game_id' => $game->id,
+            ]);
+        }
 
         if ($game->players()->count() >= 2) {
             return response()->json(['error' => 'Game is full'], 400);
         }
 
         $player = Player::create([
+            'user_id' => $user->id,
             'game_id' => $game->id,
-            'name' => $request->name,
+            'name' => $name,
             'is_turn' => false,
         ]);
 
@@ -53,12 +79,22 @@ class GameController extends Controller
 
     public function create(Request $request): JsonResponse
     {
-        $request->validate(['name' => 'required|string|max:50']);
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json(['error' => 'Authentication required'], 401);
+        }
+
+        $name = trim((string)($user->name ?? ''));
+        if ($name === '') {
+            $name = 'Player ' . $user->id;
+        }
 
         $game = Game::create();
         $player = Player::create([
+            'user_id' => $user->id,
             'game_id' => $game->id,
-            'name' => $request->name,
+            'name' => $name,
             'is_turn' => true,
         ]);
 
@@ -84,6 +120,11 @@ class GameController extends Controller
 
         /** @var Player $player */
         $player = Player::findOrFail($request->player_id);
+
+        $userId = $request->user()?->id;
+        if (!$userId || $player->user_id !== $userId) {
+            return response()->json(['error' => 'Forbidden'], 403);
+        }
 
         $ships = collect($request->ships)->map(fn($s) => [
             'x' => (int)$s['x'],
@@ -133,9 +174,18 @@ class GameController extends Controller
             'y' => 'required|integer|min:0|max:11',
         ]);
 
-        $payload = DB::transaction(function () use ($request) {
+        $userId = $request->user()?->id;
+        if (!$userId) {
+            return response()->json(['error' => 'Authentication required'], 401);
+        }
+
+        $payload = DB::transaction(function () use ($request, $userId) {
             /** @var Player $player */
             $player = Player::lockForUpdate()->findOrFail($request->player_id);
+
+            if ($player->user_id !== $userId) {
+                return response()->json(['error' => 'Forbidden'], 403);
+            }
 
             /** @var Player|null $enemy */
             $enemy = Player::where('game_id', $player->game_id)
@@ -172,9 +222,18 @@ class GameController extends Controller
             'payload' => 'nullable|array',
         ]);
 
-        $payload = DB::transaction(function () use ($request) {
+        $userId = $request->user()?->id;
+        if (!$userId) {
+            return response()->json(['error' => 'Authentication required'], 401);
+        }
+
+        $payload = DB::transaction(function () use ($request, $userId) {
             /** @var Player $player */
             $player = Player::lockForUpdate()->findOrFail($request->player_id);
+
+            if ($player->user_id !== $userId) {
+                return response()->json(['error' => 'Forbidden'], 403);
+            }
 
             /** @var Player|null $enemy */
             $enemy = Player::where('game_id', $player->game_id)
@@ -216,11 +275,17 @@ class GameController extends Controller
             'player_id' => 'nullable|integer|exists:players,id',
         ]);
 
+        $userId = $request->user()?->id;
+
         $result = $this->placementService->randomFleet();
 
         if ($request->filled('player_id')) {
             $player = Player::find($request->integer('player_id'));
             if ($player) {
+                if (!$userId || $player->user_id !== $userId) {
+                    return response()->json(['error' => 'Forbidden'], 403);
+                }
+
                 $player->update([
                     'board' => $result['board'],
                     'ships' => $result['ships'],
@@ -232,8 +297,14 @@ class GameController extends Controller
         return response()->json($result);
     }
 
-    public function state(Player $player): JsonResponse
+    public function state(Request $request, Player $player): JsonResponse
     {
+        $userId = $request->user()?->id;
+
+        if (!$userId || $player->user_id !== $userId) {
+            return response()->json(['error' => 'Forbidden'], 403);
+        }
+
         return response()->json($this->battleService->resolveState($player));
     }
 }
