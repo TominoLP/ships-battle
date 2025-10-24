@@ -49,23 +49,23 @@ function previewIsValid() {
 
 const baseRef = ref<InstanceType<typeof BaseBoard> | null>(null);
 
-const isSm = () => typeof window !== 'undefined' && window.matchMedia?.('(min-width: 640px)').matches;
-const cellPx = computed(() => (isSm() ? 36 : 32));
-const gapPx = 6;
+function handleCellHover(x: number, y: number) {
+  hoverX.value = x;
+  hoverY.value = y;
+}
+
+function handleCellClick(x: number, y: number, cell: number) {
+  if (cell !== 0) return;
+  if (nextSize.value == null) return;
+  if (!props.canPlace(x, y, nextSize.value, orientation.value)) return;
+  props.applyShip(x, y, nextSize.value, orientation.value);
+  clearHover();
+}
 
 function getCellFromPoint(clientX: number, clientY: number) {
-  const grid = (baseRef.value as any)?.getGridEl?.() as HTMLElement | null;
-  if (!grid) return null;
-  const r = grid.getBoundingClientRect();
-  const localX = clientX - r.left;
-  const localY = clientY - r.top;
-  if (localX < 0 || localY < 0 || localX > r.width || localY > r.height) return null;
-  const step = cellPx.value + gapPx;
-  let x = Math.floor(localX / step);
-  let y = Math.floor(localY / step);
-  x = Math.max(0, Math.min(11, x));
-  y = Math.max(0, Math.min(11, y));
-  return { x, y };
+  const base = baseRef.value as any;
+  if (!base?.getCellFromPoint) return null;
+  return base.getCellFromPoint(clientX, clientY) ?? null;
 }
 
 defineExpose({ getCellFromPoint, setExternalHover, clearHover, getHoverCell });
@@ -87,6 +87,9 @@ defineExpose({ getCellFromPoint, setExternalHover, clearHover, getHoverCell });
       // base empty
       return cell === 0 ? 'bg-slate-800/60 hover:bg-slate-800/80' : ''
     }"
+    :onCellHover="handleCellHover"
+    :onCellClick="handleCellClick"
+    @mouseleave="clearHover"
     showHint="Ziehe das nächste Schiff auf das Board. Blau = gültig, Rot = ungültig. Drücke R zum Drehen."
   />
 </template>

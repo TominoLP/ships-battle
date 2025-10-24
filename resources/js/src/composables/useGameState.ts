@@ -1,4 +1,4 @@
-import { ref, unref, watch } from 'vue';
+import { ref, unref, watch, computed } from 'vue';
 import GameController from '@/actions/App/Http/Controllers/GameController';
 import { api } from '@/src/composables/useApi';
 import type { PlacedShip, Step } from '@/src/types';
@@ -24,6 +24,51 @@ export function useGameState() {
   const winnerName = ref('');
 
   const socket = ref<any>(null);
+
+  // === NEW: Ability tracking ===
+  const abilityUsage = ref({
+    plane: 0,
+    splatter: 0,
+    comb: 0
+  });
+  const lastGameCode = ref<string | null>(null);
+
+  // === NEW: Kill tracking ===
+  const sunkAtTurnStart = ref(0);
+  const baselineAtTurnStart = ref(0);
+
+  const currentSunkCount = computed(() => {
+    return Array.isArray(enemySunkShips.value)
+      ? enemySunkShips.value.length
+      : 0;
+  });
+
+  const turnKills = computed(() =>
+    sunkAtTurnStart.value - baselineAtTurnStart.value
+  );
+
+  // Reset ability usage on game change
+  watch(() => gameCode.value, (code) => {
+    if (code && code !== lastGameCode.value) {
+      abilityUsage.value = { plane: 0, splatter: 0, comb: 0 };
+      lastGameCode.value = code;
+    }
+  });
+
+  // Track turn start baseline
+  watch(myTurn, (now, prev) => {
+    if (now && !prev) {
+      baselineAtTurnStart.value = currentSunkCount.value;
+      sunkAtTurnStart.value = currentSunkCount.value;
+    }
+  }, { immediate: true });
+
+  // Update sunk baseline when turn starts
+  watch([myTurn, currentSunkCount], ([isTurn, count]) => {
+    if (isTurn) {
+      sunkAtTurnStart.value = count;
+    }
+  });
 
   function pushMsg(msg: string) {
     messages.value.unshift(`[${new Date().toLocaleTimeString()}] ${msg}`);
@@ -59,6 +104,9 @@ export function useGameState() {
     winnerName.value = '';
     isReady.value = false;
     enemyBoard.value = Array.from({ length: 12 }, () => Array(12).fill(0));
+    abilityUsage.value = { plane: 0, splatter: 0, comb: 0 };
+    sunkAtTurnStart.value = 0;
+    baselineAtTurnStart.value = 0;
   }
 
   function initSocket() {
@@ -91,12 +139,6 @@ export function useGameState() {
       myTurn.value = player.id === playerId.value;
     });
 
-    /*
-    * 0 = empty water (unknown to enemy)
-    * 1 = your ship placed
-    * 3 = enemy shot missed here
-    * 4 = enemy hit your ship here
-     */
     socket.value.on('shot_fired', (data: any) => {
       pushMsg(`${data.player.name} shot (${data.x},${data.y}) – ${data.result}`);
       if (data.player.id !== playerId.value) {
@@ -133,7 +175,9 @@ export function useGameState() {
 
   async function readyUp(ships: PlacedShip[] | any) {
     if (!playerId.value) return;
-    const plainShips = unref(ships).map((s: PlacedShip) => ({ x: s.x, y: s.y, size: s.size, dir: s.dir }));
+    const plainShips = unref(ships).map((s: PlacedShip) => ({
+      x: s.x, y: s.y, size: s.size, dir: s.dir
+    }));
     const data = await api<{ started: boolean }>(
       GameController.placeShips.post(),
       { player_id: playerId.value, ships: plainShips }
@@ -162,7 +206,7 @@ export function useGameState() {
     }
   }
 
-  // === Ability support (optional server endpoint) ===
+  // === NEW: Enhanced Ability with tracking ===
   async function useAbility(
     type: 'plane' | 'comb' | 'splatter',
     payload: any
@@ -191,6 +235,9 @@ export function useGameState() {
         else if (result === 'miss') enemyBoard.value[y][x] = 1;
       }
 
+      // Track usage
+      abilityUsage.value[type]++;
+
       const hits = data.shots.filter(s => s.result === 'hit' || s.result === 'sunk').length;
       const msg = type === 'plane'
         ? `Ability: plane ${payload.axis} ${payload.index}`
@@ -213,6 +260,12 @@ export function useGameState() {
   return {
     step, name, gameCode, gameId, playerId, isReady, myTurn, messages,
     myBoard, enemyBoard, enemyName, enemySunkShips, gameOver, youWon, winnerName,
+
+    // NEW: Ability & kill tracking
+    abilityUsage,
+    turnKills,
+    currentSunkCount,
+
     createGame, joinGame, resetForNewGame, readyUp, fire, useAbility,
     pushMsg
   };
