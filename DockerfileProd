@@ -3,6 +3,7 @@
 # =========================================================
 FROM node:20-alpine AS fe
 WORKDIR /app
+ENV NODE_ENV=production
 
 COPY package.json yarn.lock ./
 RUN corepack enable && corepack prepare yarn@4.4.1 --activate \
@@ -14,11 +15,10 @@ COPY resources ./resources
 # copy BOTH: your normal vite config AND the docker override that disables wayfinder
 COPY vite.config.ts docker/vite.config.docker.ts tsconfig.json ./
 
-# Use Docker-specific vite config (without wayfinder)
-RUN cp vite.config.docker.ts vite.config.ts
-
-RUN yarn build
-
+# Use Docker-specific vite config (without wayfinder) and build
+RUN cp vite.config.docker.ts vite.config.ts \
+ && yarn build \
+ && test -f public/build/manifest.json
 
 # =========================================================
 # 2) Backend dependencies (Composer)
@@ -27,7 +27,6 @@ FROM composer:2 AS vendor
 WORKDIR /app
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --prefer-dist --no-interaction --no-scripts --optimize-autoloader
-
 
 # =========================================================
 # 3) Runtime (PHP-FPM + Nginx + Reverb) - ALPINE BASE
@@ -52,6 +51,9 @@ COPY --chown=www-data:www-data resources ./resources
 COPY --chown=www-data:www-data routes ./routes
 COPY --chown=www-data:www-data storage ./storage
 COPY --chown=www-data:www-data artisan composer.json composer.lock ./
+
+# Remove any accidentally copied hot file
+RUN rm -f public/hot
 
 # ---- Copy built artifacts from multi-stage builds ----
 COPY --chown=www-data:www-data --from=vendor /app/vendor ./vendor
