@@ -13,6 +13,9 @@ Before you begin, make sure you have the following installed:
 
 ## Setup
 
+> **Windows users:** This guide assumes WSL (preferably WSL 2). Run all commands in a WSL Ubuntu shell.
+> - [WSL2 (for Windows users)](https://docs.microsoft.com/en-us/windows/wsl/install)
+
 ### Environment Configuration
 
 Before running the app, create your `.env` file.
@@ -202,5 +205,5 @@ docker compose exec laravel php artisan migrate:fresh --seed
 
 ---
 
-**Author:** Your Company / Team  
-**License:** MIT
+**Author:** Tom Werth (mail@tweio.dev)  
+**License:** MIT — please keep the copyright and license notice. see [LICENSE](./LICENSE) for details.
