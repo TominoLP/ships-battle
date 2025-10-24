@@ -11,6 +11,7 @@ import Statistics from '@/src/components/Stats/Statistics.vue';
 import EnemyShips from '@/src/components/Placement/EnemyShips.vue';
 import AbilityPanel from '@/src/components/AbilityPanel.vue';
 import AuthPanel from '@/src/components/Auth/AuthPanel.vue';
+import LeaderboardPanel from '@/src/components/Stats/LeaderboardPanel.vue';
 
 import { useGameState } from '@/src/composables/useGameState';
 import { usePlacement } from '@/src/composables/placement';
@@ -462,35 +463,37 @@ async function onEnemyCellClick(x: number, y: number) {
           <AuthPanel />
         </div>
         <template v-else>
-          <div class="mb-6 flex justify-end">
-            <div class="flex items-center gap-3 rounded-full border border-slate-700 bg-slate-900/70 px-4 py-2 shadow-md">
-              <div class="text-sm text-slate-300">
-                Eingeloggt als <span class="font-semibold text-slate-100">{{ accountName }}</span>
+          <div class="flex flex-col">
+            <div class="mb-6 flex justify-end">
+              <div class="flex items-center gap-3 rounded-full border border-slate-700 bg-slate-900/70 px-4 py-2 shadow-md">
+                <div class="text-sm text-slate-300">
+                  Eingeloggt als <span class="font-semibold text-slate-100">{{ accountName }}</span>
+                </div>
+                <button class="text-sm text-red-400 hover:text-red-300" type="button" @click="handleLogout">
+                  Abmelden
+                </button>
               </div>
-              <button class="text-sm text-red-400 hover:text-red-300" type="button" @click="handleLogout">
-                Abmelden
-              </button>
             </div>
-          </div>
-
-          <!-- Header -->
-          <div class="mb-8 text-center">
-            <div class="mb-2 flex items-center justify-center gap-3">
-              <svg class="h-10 w-10 text-blue-400" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
-                   stroke-width="2" viewBox="0 0 24 24">
-                <circle cx="12" cy="5" r="2.5" />
-                <path d="M12 8.5v12" />
-                <path d="M7 11h10" />
-                <path d="M12 20.5c-3.5 0-6-2.5-6-5.5" />
-                <path d="M12 20.5c3.5 0 6-2.5 6-5.5" />
-              </svg>
-              <h1 class="text-3xl font-semibold text-blue-400">Schiffeversenken</h1>
+  
+            <!-- Header -->
+            <div class="mb-8 text-center">
+              <div class="mb-2 flex items-center justify-center gap-3">
+                <svg class="h-10 w-10 text-blue-400" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                     stroke-width="2" viewBox="0 0 24 24">
+                  <circle cx="12" cy="5" r="2.5" />
+                  <path d="M12 8.5v12" />
+                  <path d="M7 11h10" />
+                  <path d="M12 20.5c-3.5 0-6-2.5-6-5.5" />
+                  <path d="M12 20.5c3.5 0 6-2.5 6-5.5" />
+                </svg>
+                <h1 class="text-3xl font-semibold text-blue-400">Schiffeversenken</h1>
+              </div>
+              <p class="text-slate-400">{{ statusMessage }}</p>
             </div>
-            <p class="text-slate-400">{{ statusMessage }}</p>
           </div>
 
           <!-- JOIN -->
-          <div v-if="gs.step === 'join'" class="mx-auto max-w-md">
+          <div v-if="gs.step === 'join'" class="mx-auto max-w-3xl space-y-6">
             <div class="rounded-xl border border-slate-700 bg-slate-900/80 p-6 shadow-xl">
               <CreatePanel
                 v-model:gameCode="gs.gameCode"
@@ -499,6 +502,7 @@ async function onEnemyCellClick(x: number, y: number) {
                 @join="gs.joinGame"
               />
             </div>
+            <LeaderboardPanel :userName="accountName"/>
           </div>
 
           <!-- LOBBY -->

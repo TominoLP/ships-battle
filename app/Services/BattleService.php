@@ -9,6 +9,7 @@ use App\Events\TurnChanged;
 use App\Models\Game;
 use App\Models\Move;
 use App\Models\Player;
+use App\Models\PlayerGameHistory;
 use Illuminate\Support\Arr;
 
 class BattleService
@@ -248,6 +249,79 @@ class BattleService
         ]);
 
         broadcast(new GameFinished($game, $winner));
+
+        $this->recordHistory($game, $winner, $loser);
+    }
+
+    private function recordHistory(Game $game, Player $winner, Player $loser): void
+    {
+        $gameId = $game->id;
+
+        $winnerShipsDestroyed = Move::where('game_id', $gameId)
+            ->where('player_id', $winner->id)
+            ->where('result', 'sunk')
+            ->count();
+        $loserShipsDestroyed = Move::where('game_id', $gameId)
+            ->where('player_id', $loser->id)
+            ->where('result', 'sunk')
+            ->count();
+
+        $winnerShots = Move::where('game_id', $gameId)
+            ->where('player_id', $winner->id)
+            ->count();
+        $loserShots = Move::where('game_id', $gameId)
+            ->where('player_id', $loser->id)
+            ->count();
+
+        $winnerHits = Move::where('game_id', $gameId)
+            ->where('player_id', $winner->id)
+            ->whereIn('result', ['hit', 'sunk'])
+            ->count();
+        $loserHits = Move::where('game_id', $gameId)
+            ->where('player_id', $loser->id)
+            ->whereIn('result', ['hit', 'sunk'])
+            ->count();
+
+        $winnerShipsLost = $loserShipsDestroyed;
+        $loserShipsLost = $winnerShipsDestroyed;
+
+        $winnerUsage = $winner->ability_usage;
+        $loserUsage = $loser->ability_usage;
+
+        $winnerAbilities = is_array($winnerUsage)
+            ? array_sum(array_map('intval', $winnerUsage))
+            : 0;
+        $loserAbilities = is_array($loserUsage)
+            ? array_sum(array_map('intval', $loserUsage))
+            : 0;
+
+        if ($winner->user_id) {
+            PlayerGameHistory::updateOrCreate(
+                ['user_id' => $winner->user_id, 'game_id' => $gameId],
+                [
+                    'result' => 'win',
+                    'ships_destroyed' => $winnerShipsDestroyed,
+                    'ships_lost' => $winnerShipsLost,
+                    'shots_fired' => $winnerShots,
+                    'hits' => $winnerHits,
+                    'abilities_used' => $winnerAbilities,
+                ]
+            );
+        }
+
+        if ($loser->user_id) {
+            PlayerGameHistory::updateOrCreate(
+                ['user_id' => $loser->user_id, 'game_id' => $gameId],
+                [
+                    'result' => 'loss',
+                    'ships_destroyed' => $loserShipsDestroyed,
+                    'ships_lost' => $loserShipsLost,
+                    'shots_fired' => $loserShots,
+                    'hits' => $loserHits,
+                    'abilities_used' => $loserAbilities,
+                ]
+            );
+        }
     }
 
     private function switchTurn(Player $current, Player $next): void

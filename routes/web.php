@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GameController;
+use App\Http\Controllers\StatsController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'app');
@@ -15,13 +16,19 @@ Route::prefix('api')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
     });
 
-    Route::middleware('auth')->prefix('game')->group(function () {
-        Route::post('/create', [GameController::class, 'create']);
-        Route::post('/join', [GameController::class, 'join']);
-        Route::post('/shoot', [GameController::class, 'shoot']);
-        Route::post('/place-ships', [GameController::class, 'placeShips']);
-        Route::post('/ability', [GameController::class, 'useAbility']);
-        Route::post('/placement/random', [GameController::class, 'randomPlacement']);
-        Route::get('/state/{player}', [GameController::class, 'state']);
+    Route::middleware('auth')->group(function () {
+        Route::prefix('game')->group(function () {
+            Route::post('/create', [GameController::class, 'create']);
+            Route::post('/join', [GameController::class, 'join']);
+            Route::post('/shoot', [GameController::class, 'shoot']);
+            Route::post('/place-ships', [GameController::class, 'placeShips']);
+            Route::post('/ability', [GameController::class, 'useAbility']);
+            Route::post('/placement/random', [GameController::class, 'randomPlacement']);
+            Route::get('/state/{player}', [GameController::class, 'state']);
+        });
+
+        Route::prefix('stats')->group(function () {
+            Route::get('/leaderboard', [StatsController::class, 'leaderboard']);
+        });
     });
 });

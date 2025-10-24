@@ -6,6 +6,19 @@ export type AuthUser = {
   email: string;
 };
 
+export type LeaderboardEntry = {
+  user_id: number;
+  name: string;
+  ships_destroyed: number;
+  ships_lost: number;
+  wins: number;
+  games: number;
+  win_rate: number;
+  shots_fired: number;
+  hits: number;
+  abilities_used: number;
+};
+
 export type ShipSpec = {
   name: string;
   size: number;
