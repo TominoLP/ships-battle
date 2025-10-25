@@ -22,6 +22,8 @@ import GameControllerRoutes from '@/actions/App/Http/Controllers/GameController'
 import { api } from '@/src/composables/useApi';
 import { useAuth } from '@/src/composables/useAuth';
 
+const appVersion: string = __APP_VERSION__
+
 const gs = proxyRefs(useGameState());
 const auth = useAuth();
 
@@ -744,5 +746,6 @@ async function onEnemyCellClick(x: number, y: number) {
         </template>
       </template>
     </div>
+    <div class="absolute text-slate-400 bottom-0 left-0">ships-app: v{{appVersion}}</div>
   </div>
 </template>
