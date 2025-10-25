@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
+        
       # ---------- Frontend (Yarn 4 via Corepack) ----------
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -37,9 +37,13 @@ jobs:
       - name: Install FE deps
         run: yarn install --immutable
 
+      - name: Use Vite Docker config
+        run: cp ./docker/vite.config.docker.ts ./vite.config.ts
+
       - name: Build FE
         run: yarn build
-
+      
+      
       # ---------- Backend (Laravel + Pest) ----------
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
