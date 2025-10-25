@@ -91,7 +91,8 @@ class GameController extends Controller
             $name = 'Player ' . $user->id;
         }
 
-        $game = Game::create();
+        $game = new Game();
+        $game->save();
         $player = Player::create([
             'user_id' => $user->id,
             'game_id' => $game->id,

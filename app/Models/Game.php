@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -23,6 +24,7 @@ use Illuminate\Support\Str;
  */
 class Game extends Model
 {
+    use HasFactory;
     const STATUS_WAITING = 'waiting';
     const STATUS_CREATING = 'creating';
     const STATUS_IN_PROGRESS = 'in_progress';
@@ -45,6 +47,8 @@ class Game extends Model
         static::creating(static function ($game) {
             if (empty($game->status)) {
                 $game->status = self::STATUS_WAITING;
+            }
+            if (empty($game->code)) {
                 $game->code = self::generateUniqueCode();
             }
         });
