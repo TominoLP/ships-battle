@@ -5,12 +5,11 @@ on:
   pull_request:
 
 jobs:
-  test:
+  build_and_test:
     runs-on: ubuntu-latest
     env:
-      # Laravel testing env (SQLite)
       APP_ENV: testing
-      APP_KEY: base64:placeholderkey123456789012345678901234567890= # will be overwritten
+      APP_KEY: base64:placeholderkey123456789012345678901234567890=
       DB_CONNECTION: sqlite
       DB_DATABASE: database/database.sqlite
       CACHE_DRIVER: array
@@ -23,33 +22,38 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ---------- Frontend build ----------
-      - name: Setup Node
+      # ---------- Frontend (Yarn 4 via Corepack) ----------
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: yarn
+
+      - name: Enable Corepack & Yarn 4.4.1
+        run: |
+          corepack enable
+          corepack prepare yarn@4.4.1 --activate
+          yarn --version
 
       - name: Install FE deps
-        run: yarn install --frozen-lockfile
+        run: yarn install --immutable
 
       - name: Build FE
         run: yarn build
 
-      # ---------- Backend tests ----------
+      # ---------- Backend (Laravel + Pest) ----------
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
           extensions: mbstring, dom, curl, fileinfo, sqlite, pdo_sqlite, bcmath, pcntl, zip
           coverage: none
-          ini-values: memory_limit=-1
           tools: composer:v2
+          ini-values: memory_limit=-1
 
       - name: Install PHP deps
         run: composer install --no-interaction --prefer-dist --no-progress
 
-      - name: Prepare Laravel app
+      - name: Prepare Laravel (SQLite)
         run: |
           cp .env.example .env || true
           php -r "is_dir('database') || mkdir('database'); touch('database/database.sqlite');"
