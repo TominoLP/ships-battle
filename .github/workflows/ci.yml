@@ -9,7 +9,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       APP_ENV: testing
-      APP_KEY: base64:placeholderkey123456789012345678901234567890=
       DB_CONNECTION: sqlite
       DB_DATABASE: database/database.sqlite
       CACHE_DRIVER: array
@@ -61,7 +60,7 @@ jobs:
         run: |
           cp .env.example .env || true
           php -r "is_dir('database') || mkdir('database'); touch('database/database.sqlite');"
-          php artisan key:generate
+          php artisan key:generate --force
           php artisan migrate --force
 
       - name: Run tests (Pest)
