@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      # Laravel testing env (SQLite)
+      APP_ENV: testing
+      APP_KEY: base64:placeholderkey123456789012345678901234567890= # will be overwritten
+      DB_CONNECTION: sqlite
+      DB_DATABASE: database/database.sqlite
+      CACHE_DRIVER: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+      BROADCAST_DRIVER: log
+      MAIL_MAILER: log
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ---------- Frontend build ----------
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+
+      - name: Install FE deps
+        run: yarn install --frozen-lockfile
+
+      - name: Build FE
+        run: yarn build
+
+      # ---------- Backend tests ----------
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, dom, curl, fileinfo, sqlite, pdo_sqlite, bcmath, pcntl, zip
+          coverage: none
+          ini-values: memory_limit=-1
+          tools: composer:v2
+
+      - name: Install PHP deps
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Prepare Laravel app
+        run: |
+          cp .env.example .env || true
+          php -r "is_dir('database') || mkdir('database'); touch('database/database.sqlite');"
+          php artisan key:generate
+          php artisan migrate --force
+
+      - name: Run tests (Pest)
+        run: ./vendor/bin/pest
