@@ -392,6 +392,7 @@ class GameController extends Controller
                     'code' => $newGame->code,
                 ],
                 'player' => $current,
+                'players' => $mapping,
             ];
         });
 

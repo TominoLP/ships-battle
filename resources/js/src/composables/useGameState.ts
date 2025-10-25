@@ -17,6 +17,7 @@ type RematchResponse = {
   message?: string;
   game?: { id: number; code: string };
   player?: RematchMapping;
+  players?: RematchMapping[];
 };
 
 type RematchEventPayload = {
@@ -242,10 +243,17 @@ export function useGameState() {
         return;
       }
 
-      if (data.status === 'ready' && data.game && data.player) {
+      if (data.status === 'ready' && data.game) {
         rematchState.value = 'ready';
         pushMsg('Rematch bestätigt – neues Spiel startet');
-        applyRematch(data.game, data.player);
+        if (Array.isArray(data.players) && data.players.length > 0) {
+          handleRematchReady({
+            next: data.game,
+            players: data.players
+          });
+        } else if (data.player) {
+          applyRematch(data.game, data.player);
+        }
         return;
       }
 
