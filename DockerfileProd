@@ -11,6 +11,7 @@ RUN corepack enable && corepack prepare yarn@4.4.1 --activate \
  && yarn install --immutable
 
 # Copy only what's needed for build
+COPY composer.json ./
 COPY resources ./resources
 # copy BOTH: your normal vite config AND the docker override that disables wayfinder
 COPY vite.config.ts docker/vite.config.docker.ts tsconfig.json ./
@@ -54,6 +55,9 @@ COPY --chown=www-data:www-data artisan composer.json composer.lock ./
 
 # Remove any accidentally copied hot file
 RUN rm -f public/hot
+
+RUN rm -f bootstrap/cache/*.php \
+    && find storage/framework -type f -name '*.php' -delete || true
 
 # ---- Copy built artifacts from multi-stage builds ----
 COPY --chown=www-data:www-data --from=vendor /app/vendor ./vendor

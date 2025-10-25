@@ -7,6 +7,13 @@ echo "[entrypoint] Booting Ships App..."
 rm -f public/hot || true
 [ -f .env ] && sed -i '/^VITE_DEV_SERVER_URL=/d' .env || true
 
+rm -f bootstrap/cache/packages.php \
+      bootstrap/cache/services.php \
+      bootstrap/cache/config.php \
+      bootstrap/cache/routes-*.php \
+      bootstrap/cache/events.php || true
+find storage/framework -maxdepth 1 -type f -name '*.php' -delete || true
+
 # --- Ensure runtime dirs (works even with storage volume) ---
 mkdir -p \
   storage/framework/sessions \
