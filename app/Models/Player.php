@@ -22,6 +22,7 @@ use Illuminate\Support\Carbon;
  * @method static findOrFail(mixed $player_id)
  * @method static create(array $array)
  * @method static lockForUpdate()
+ * @method static find(int $integer)
  */
 class Player extends Model
 {

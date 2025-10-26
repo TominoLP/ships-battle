@@ -11,11 +11,13 @@ const showMode = ref<'none' | 'create' | 'join'>(gameCode.value ? 'join' : 'none
 
 const canJoin = computed(() => !!gameCode.value && gameCode.value.trim().length === 6);
 
-const emit = defineEmits<{ (e: 'create'): void; (e: 'join'): void }>();
+const emit = defineEmits<{ (e: 'create', options?: { public: boolean }): void; (e: 'join'): void }>();
+
+const makePublic = ref(false);
 
 function handleCreate() {
   showMode.value = 'create';
-  emit('create');
+  makePublic.value = false;
 }
 
 function handleJoin() {
@@ -24,6 +26,10 @@ function handleJoin() {
 
 function confirmJoin() {
   emit('join');
+}
+
+function confirmCreate() {
+  emit('create', { public: makePublic.value });
 }
 
 watch(gameCode, (code) => {
@@ -67,6 +73,37 @@ watch(gameCode, (code) => {
       <p class="text-sm text-slate-300">
         Wir haben ein neues Spiel für dich vorbereitet. Teile den Code mit deinem Gegner.
       </p>
+
+      <label class="flex items-start gap-3 rounded-lg border border-slate-700 bg-slate-800/70 px-4 py-3 text-sm text-slate-200">
+        <input
+          v-model="makePublic"
+          type="checkbox"
+          class="mt-1 h-4 w-4 rounded border-slate-500 bg-slate-900 text-emerald-500 focus:ring-emerald-500"
+        >
+        <span>
+          <span class="block font-semibold">Öffentliches Spiel</span>
+          <span class="text-xs text-slate-400">
+            Aktivieren, damit dein Spiel in der öffentlichen Lobby erscheint und andere Spieler direkt beitreten können.
+          </span>
+        </span>
+      </label>
+
+      <div class="flex gap-2">
+        <button
+          type="button"
+          class="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-500"
+          @click="confirmCreate"
+        >
+          Spiel starten
+        </button>
+        <button
+          type="button"
+          class="flex-1 rounded-lg border border-slate-600 px-4 py-2 text-slate-200 hover:bg-slate-700"
+          @click="showMode = 'none'"
+        >
+          Abbrechen
+        </button>
+      </div>
     </div>
   </div>
 </template>

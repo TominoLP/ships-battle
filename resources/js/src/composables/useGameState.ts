@@ -2,7 +2,7 @@ import { ref, unref, watch } from 'vue';
 import GameController from '@/actions/App/Http/Controllers/GameController';
 import { api } from '@/src/composables/useApi';
 import type { PlacedShip, Step } from '@/src/types';
-import { useGameSocket } from '@/src/composables/useGameSocket';
+import { useGameSocket, usePublicGameStream } from '@/src/composables/useGameSocket';
 
 type RematchMapping = {
   old_player_id: number;
@@ -25,6 +25,12 @@ type RematchEventPayload = {
   players?: RematchMapping[];
 };
 
+type PublicGameSummary = {
+  id: number;
+  code: string;
+  enemy_name: string;
+};
+
 const SESSION_STORAGE_KEY = 'ships-battle/session/v1';
 const RESUMABLE_STEPS: Step[] = ['lobby', 'placing', 'playing'];
 
@@ -36,6 +42,7 @@ export function useGameState() {
   const isReady = ref(false);
   const myTurn = ref(false);
   const messages = ref<string[]>([]);
+  const gamesAvailable = ref<PublicGameSummary[]>([]);
 
   const createEmptyBoard = () => Array.from({ length: 12 }, () => Array(12).fill(0));
 
@@ -181,8 +188,29 @@ export function useGameState() {
     persistSession();
   });
 
+  const publicStream = typeof window !== 'undefined' ? usePublicGameStream() : null;
+
+  if (publicStream) {
+    publicStream.on('public_game_available', (payload: PublicGameSummary) => {
+      if (!payload || typeof payload.id !== 'number') return;
+      const entry: PublicGameSummary = {
+        id: payload.id,
+        code: payload.code,
+        enemy_name: payload.enemy_name ?? 'Waiting for player',
+      };
+      const existing = gamesAvailable.value.filter(game => game.id !== entry.id);
+      gamesAvailable.value = [entry, ...existing];
+    });
+
+    publicStream.on('public_game_unavailable', (payload: { id?: number }) => {
+      if (!payload || typeof payload.id !== 'number') return;
+      gamesAvailable.value = gamesAvailable.value.filter(game => game.id !== payload.id);
+    });
+  }
+
   if (typeof window !== 'undefined') {
     void restoreSession();
+    void refreshAvailableGames();
   }
 
   async function refreshState(targetPlayerId?: number) {
@@ -248,9 +276,27 @@ export function useGameState() {
     }
   }
 
-  async function createGame() {
+  async function refreshAvailableGames() {
+    try {
+      const data = await api<{ games?: PublicGameSummary[] }>(
+        GameController.getAvailableGames.get()
+      );
+      gamesAvailable.value = Array.isArray(data?.games) ? data.games : [];
+    } catch (err: any) {
+      const status = err?.response?.status;
+      if (status === 401) {
+        gamesAvailable.value = [];
+        return;
+      }
+      console.error('[GameState] Failed to load available games', err);
+    }
+  }
+
+  async function createGame(options?: { public?: boolean }) {
+    const payload = options ? { public: Boolean(options.public) } : undefined;
     const data = await api<{ game_code: string; game_id: number; player_id: number }>(
-      GameController.create.post()
+      GameController.create.post(),
+      payload
     );
     gameCode.value = data.game_code;
     gameId.value = data.game_id;
@@ -664,6 +710,7 @@ export function useGameState() {
     myBoard, enemyBoard, enemyName, enemySunkShips, gameOver, youWon, winnerName,
     abilityUsage, turnKills, rematchState, rematchError,
     createGame, joinGame, resetForNewGame, readyUp, fire, useAbility, requestRematch,
+    gamesAvailable, refreshAvailableGames,
     pushMsg
   };
 }

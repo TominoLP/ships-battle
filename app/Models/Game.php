@@ -18,6 +18,7 @@ use Illuminate\Support\Str;
  * @property string $code
  * @property string $status
  * @property int|null $winner_player_id
+ * @property boolean $public
  * @method static where(string $string, string $code)
  * @method static create()
  * @method static lockForUpdate()
@@ -33,11 +34,13 @@ class Game extends Model
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'public' => 'boolean',
     ];
     protected $fillable = [
         'code',
         'status',
         'winner_player_id',
+        'public',
     ];
 
     protected static function boot(): void

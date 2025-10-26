@@ -143,6 +143,10 @@ function handleRematchRequest() {
   void gs.requestRematch();
 }
 
+function handleCreateGame(options?: { public?: boolean }) {
+  void gs.createGame(options);
+}
+
 function handleLeaveGame() {
   gs.resetForNewGame();
   resetPlacementState();
@@ -538,6 +542,7 @@ async function onEnemyCellClick(x: number, y: number) {
               </div>
 
               <p class="mt-2 text-slate-400">{{ statusMessage }}</p>
+              {{gs.gamesAvailable}}
             </div>
           </div>
 
@@ -547,7 +552,7 @@ async function onEnemyCellClick(x: number, y: number) {
               <CreatePanel
                 v-model:gameCode="gs.gameCode"
                 :userName="accountName"
-                @create="gs.createGame"
+                @create="handleCreateGame"
                 @join="gs.joinGame"
               />
             </div>

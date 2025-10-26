@@ -9,14 +9,16 @@ if (typeof window !== 'undefined') {
   ;(window as any).Pusher = Pusher;
 }
 
-// Cache per game to avoid multiple sockets across HMR/component remounts
-const registry = new Map<number, {
-  // @ts-ignore
-  echo: Echo
+type ChannelEntry = {
+  echo: Echo<'pusher'>
   channel: ReturnType<Echo<'pusher'>['channel']>
   messages: Ref<string[]>
-  refs: number // simple ref-count
-}>();
+  refs: number
+};
+
+// Cache per game to avoid multiple sockets across HMR/component remounts
+const registry = new Map<number, ChannelEntry>();
+let publicEntry: ChannelEntry | null = null;
 
 type UseGameSocketApi = {
   echo: Echo<'pusher'>
@@ -52,36 +54,7 @@ export function useGameSocket(gameId: number): UseGameSocketApi {
   if (!registry.has(gameId)) {
     const messages = ref<string[]>([]);
 
-    const echo = new Echo({
-      broadcaster: 'pusher',
-      key: 'reverb',
-      wsHost: window.location.hostname,
-      wsPort: Number(import.meta.env.VITE_REVERB_PORT ?? 8080),
-      wssPort: Number(import.meta.env.VITE_REVERB_WSS_PORT ?? 443),
-      forceTLS: Boolean(import.meta.env.VITE_REVERB_TLS ?? false),
-      disableStats: true,
-      enabledTransports: ['ws', 'wss'],
-      cluster: ''
-      // wsPath: import.meta.env.VITE_REVERB_PATH || undefined,
-      // authEndpoint: '/broadcasting/auth',
-    });
-
-    // Lifecycle logs
-    const pusher = (echo as any).connector?.pusher;
-    if (pusher?.connection) {
-      pusher.connection.bind('connected', () => {
-        push(`🔌 Connected (${echo.options.wsHost}:${echo.options.wsPort ?? echo.options.wssPort}${echo.options.wsPath ?? ''})`);
-      });
-      pusher.connection.bind('error', (err: any) => push(`⚠️ Connect error: ${err?.message ?? err}`));
-      pusher.connection.bind('state_change', (s: any) => push(`🔄 State: ${s?.previous} → ${s?.current}`));
-    }
-
-    function push(msg: string) {
-      messages.value.unshift(`[${new Date().toLocaleTimeString()}] ${msg}`);
-    }
-
-    const channel = echo.channel(`game.${gameId}`);
-
+    const { echo, channel } = createChannel(`game.${gameId}`, messages);
     registry.set(gameId, { echo, channel, messages, refs: 0 });
   }
 
@@ -117,6 +90,103 @@ export function useGameSocket(gameId: number): UseGameSocketApi {
     entry.echo.leaveChannel(`game.${gameId}`);
     if (entry.refs <= 0) {
       registry.delete(gameId);
+    }
+  });
+
+  return {
+    echo: entry.echo,
+    channel: entry.channel,
+    messages: entry.messages,
+    on,
+    off,
+    leave,
+    disconnect
+  };
+}
+
+function createChannel(name: string, messages: Ref<string[]>): { echo: Echo<'pusher'>; channel: ReturnType<Echo<'pusher'>['channel']> } {
+  const echo = new Echo({
+    broadcaster: 'pusher',
+    key: 'reverb',
+    wsHost: window.location.hostname,
+    wsPort: Number(import.meta.env.VITE_REVERB_PORT ?? 8080),
+    wssPort: Number(import.meta.env.VITE_REVERB_WSS_PORT ?? 443),
+    forceTLS: Boolean(import.meta.env.VITE_REVERB_TLS ?? false),
+    disableStats: true,
+    enabledTransports: ['ws', 'wss'],
+    cluster: ''
+    // wsPath: import.meta.env.VITE_REVERB_PATH || undefined,
+    // authEndpoint: '/broadcasting/auth',
+  });
+
+  const pusher = (echo as any).connector?.pusher;
+  if (pusher?.connection) {
+    pusher.connection.bind('connected', () => {
+      push(`🔌 Connected (${echo.options.wsHost}:${echo.options.wsPort ?? echo.options.wssPort}${echo.options.wsPath ?? ''})`);
+    });
+    pusher.connection.bind('error', (err: any) => push(`⚠️ Connect error: ${err?.message ?? err}`));
+    pusher.connection.bind('state_change', (s: any) => push(`🔄 State: ${s?.previous} → ${s?.current}`));
+  }
+
+  function push(msg: string) {
+    messages.value.unshift(`[${new Date().toLocaleTimeString()}] ${msg}`);
+  }
+
+  const channel = echo.channel(name);
+  return { echo, channel };
+}
+
+export function usePublicGameStream(): UseGameSocketApi {
+  if (typeof window === 'undefined') {
+    const noop = () => {};
+    return {
+      echo: {} as Echo<'pusher'>,
+      channel: {} as any,
+      messages: ref<string[]>([]),
+      on: noop,
+      off: noop,
+      leave: noop,
+      disconnect: noop
+    };
+  }
+
+  if (!publicEntry) {
+    const messages = ref<string[]>([]);
+    const { echo, channel } = createChannel('game_public', messages);
+    publicEntry = { echo, channel, messages, refs: 0 };
+  }
+
+  const entry = publicEntry;
+  entry.refs++;
+
+  function on(event: string, handler: (data: any) => void) {
+    entry.channel.listen(`.${event}`, (payload: any) => {
+      try {
+        handler(payload);
+      } finally {
+        entry.messages.value.unshift(`[${new Date().toLocaleTimeString()}] ${event}: ${JSON.stringify(payload)}`);
+      }
+    });
+  }
+
+  function off(event: string) {
+    entry.channel.stopListening(`.${event}`);
+  }
+
+  function leave() {
+    entry.echo.leaveChannel('game_public');
+  }
+
+  function disconnect() {
+    entry.echo.disconnect();
+  }
+
+  onBeforeUnmount(() => {
+    entry.refs--;
+    entry.echo.leaveChannel('game_public');
+    if (entry.refs <= 0) {
+      entry.echo.disconnect();
+      publicEntry = null;
     }
   });
 

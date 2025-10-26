@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\GameCreated;
 use App\Events\PlayerJoined;
 use App\Events\PlayerReady;
+use App\Events\PublicGameAvailable;
 use App\Events\RematchReady;
 use App\Models\Game;
 use App\Models\Player;
@@ -80,6 +81,10 @@ class GameController extends Controller
 
     public function create(Request $request): JsonResponse
     {
+        $request->validate([
+            'public' => 'sometimes|boolean',
+        ]);
+
         $user = $request->user();
 
         if (!$user) {
@@ -92,6 +97,7 @@ class GameController extends Controller
         }
 
         $game = new Game();
+        $game->public = $request->boolean('public', false);
         $game->save();
         $player = Player::create([
             'user_id' => $user->id,
@@ -101,11 +107,15 @@ class GameController extends Controller
         ]);
 
         broadcast(new GameCreated($game, $player));
+        if ($game->public) {
+            broadcast(new PublicGameAvailable($game));
+        }
 
         return response()->json([
             'game_code' => $game->code,
             'player_id' => $player->id,
             'game_id' => $game->id,
+            'public' => $game->public,
         ]);
     }
 
@@ -430,6 +440,23 @@ class GameController extends Controller
         }
 
         return response()->json($result);
+    }
+    public function getAvailableGames(Request $request): JsonResponse
+    {
+        $games = Game::query()
+            ->where('public', true)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(static function (Game $game) {
+                return [
+                    'id' => $game->id,
+                    'code' => $game->code,
+                    'enemy_name' => $game->players->first()?->name ?? 'Waiting for player',
+                ];
+            })
+            ->values();
+
+        return response()->json(['games' => $games]);
     }
 
     public function state(Request $request, Player $player): JsonResponse
