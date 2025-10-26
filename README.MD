@@ -45,7 +45,7 @@ For Production deployments:
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-org/ships-app.git
+git clone https://github.com/TominoLP/ships-app.git
 cd ships-app
 ```
 
