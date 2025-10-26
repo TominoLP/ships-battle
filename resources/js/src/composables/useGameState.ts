@@ -25,6 +25,9 @@ type RematchEventPayload = {
   players?: RematchMapping[];
 };
 
+const SESSION_STORAGE_KEY = 'ships-battle/session/v1';
+const RESUMABLE_STEPS: Step[] = ['lobby', 'placing', 'playing'];
+
 export function useGameState() {
   const step = ref<Step>('join');
   const gameCode = ref('');
@@ -58,6 +61,7 @@ export function useGameState() {
   // === Rematch flow ===
   const rematchState = ref<'idle' | 'waiting' | 'ready'>('idle');
   const rematchError = ref<string | null>(null);
+  let restoringSession = false;
 
   if (typeof window !== 'undefined') {
     const initialCode = new URLSearchParams(window.location.search).get('code');
@@ -79,6 +83,83 @@ export function useGameState() {
     messages.value.unshift(`[${new Date().toLocaleTimeString()}] ${msg}`);
   }
 
+  function clearSession() {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.removeItem(SESSION_STORAGE_KEY);
+    } catch (err) {
+      console.warn('[GameState] Failed to clear session storage', err);
+    }
+  }
+
+  function persistSession() {
+    if (typeof window === 'undefined') return;
+    if (restoringSession) return;
+    if (!playerId.value || !gameId.value || !gameCode.value) {
+      clearSession();
+      return;
+    }
+    if (!RESUMABLE_STEPS.includes(step.value) || gameOver.value) {
+      clearSession();
+      return;
+    }
+    const payload = {
+      playerId: playerId.value,
+      gameId: gameId.value,
+      gameCode: gameCode.value,
+      step: step.value,
+    };
+    try {
+      window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(payload));
+    } catch (err) {
+      console.warn('[GameState] Failed to persist session', err);
+    }
+  }
+
+  async function restoreSession() {
+    if (typeof window === 'undefined') return;
+    let payload: { playerId: number; gameId: number; gameCode: string; step: Step } | null = null;
+    try {
+      const raw = window.localStorage.getItem(SESSION_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (
+        typeof parsed?.playerId === 'number' &&
+        typeof parsed?.gameId === 'number' &&
+        typeof parsed?.gameCode === 'string'
+      ) {
+        const storedStep = parsed.step as Step;
+        payload = {
+          playerId: parsed.playerId,
+          gameId: parsed.gameId,
+          gameCode: parsed.gameCode,
+          step: RESUMABLE_STEPS.includes(storedStep) ? storedStep : 'placing',
+        };
+      }
+    } catch (err) {
+      console.warn('[GameState] Failed to parse session payload', err);
+    }
+
+    if (!payload) return;
+
+    restoringSession = true;
+    try {
+      playerId.value = payload.playerId;
+      gameId.value = payload.gameId;
+      gameCode.value = payload.gameCode;
+      step.value = payload.step;
+      initSocket();
+      await refreshState(payload.playerId);
+    } catch (err) {
+      console.error('[GameState] Failed to restore session', err);
+      resetForNewGame();
+      clearSession();
+    } finally {
+      restoringSession = false;
+      persistSession();
+    }
+  }
+
   function updateGameUrl(stepValue: Step, code: string | null | undefined) {
     if (typeof window === 'undefined') return;
     const active = stepValue === 'lobby' || stepValue === 'placing' || stepValue === 'playing';
@@ -96,6 +177,14 @@ export function useGameState() {
     updateGameUrl(stepValue, code);
   }, { immediate: true });
 
+  watch([playerId, gameId, gameCode, step, gameOver], () => {
+    persistSession();
+  });
+
+  if (typeof window !== 'undefined') {
+    void restoreSession();
+  }
+
   async function refreshState(targetPlayerId?: number) {
     const id = targetPlayerId ?? playerId.value;
     if (!id) return;
@@ -110,6 +199,8 @@ export function useGameState() {
           turnKills: number;
         };
         enemy: { id: number; name: string; isReady: boolean } | null;
+        game?: { id: number; code: string; status: string; winner_player_id: number | null } | null;
+        winner?: { id: number; name: string } | null;
       }>(GameController.state.get(id));
 
       if (data?.player) {
@@ -122,6 +213,35 @@ export function useGameState() {
 
       if (data?.enemy) {
         enemyName.value = data.enemy.name ?? enemyName.value;
+      }
+
+      if (data?.game) {
+        if (!gameId.value) {
+          gameId.value = data.game.id ?? null;
+        }
+        if (!gameCode.value) {
+          gameCode.value = data.game.code ?? '';
+        }
+        const status = data.game.status;
+        const playerReady = data?.player?.isReady ?? false;
+        if (status === 'completed') {
+          gameOver.value = true;
+          youWon.value = data?.winner?.id === playerId.value;
+          winnerName.value = data?.winner?.name ?? '';
+          step.value = 'playing';
+        } else {
+          gameOver.value = false;
+          winnerName.value = '';
+          youWon.value = null;
+          if (status === 'in_progress') {
+            step.value = 'playing';
+          } else if (status === 'creating') {
+            step.value = playerReady ? 'lobby' : 'placing';
+          } else if (status === 'waiting') {
+            step.value = 'lobby';
+          }
+        }
+      } else {
       }
     } catch (err) {
       console.error('[GameState] Failed to refresh state', err);
@@ -157,6 +277,16 @@ export function useGameState() {
   }
 
   function resetForNewGame() {
+    if (socket.value) {
+      try {
+        socket.value.leave?.();
+        socket.value.disconnect?.();
+      } catch (err) {
+        console.warn('[GameState] Failed to disconnect socket', err);
+      } finally {
+        socket.value = null;
+      }
+    }
     step.value = 'join';
     gameOver.value = false;
     youWon.value = null;
@@ -173,6 +303,7 @@ export function useGameState() {
     gameCode.value = '';
     gameId.value = null;
     playerId.value = null;
+    clearSession();
   }
 
   function applyRematch(nextGame: { id: number; code: string }, mapping: RematchMapping) {

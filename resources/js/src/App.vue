@@ -143,6 +143,11 @@ function handleRematchRequest() {
   void gs.requestRematch();
 }
 
+function handleLeaveGame() {
+  gs.resetForNewGame();
+  resetPlacementState();
+}
+
 // Selection (type-based for placing)
 const selectedSize = ref<number | null>(null);
 function pickSize(size: number | null) {
@@ -493,9 +498,18 @@ async function onEnemyCellClick(x: number, y: number) {
           <div class="flex flex-col gap-6">
             <div class="relative mb-6 text-center">
               <div class="absolute right-0 top-0 flex justify-end">
-                <div class="inline-flex items-center gap-3 rounded-full border border-slate-700 bg-slate-900/80 px-4 py-2 shadow-md">
+                <div v-if="gs.gameId" class="inline-flex items-center gap-3 rounded-full border border-slate-700 bg-slate-900/80 px-4 py-2 shadow-md">
+                  <button
+                    type="button"
+                    class="text-sm text-red-400 hover:text-red-500"
+                    @click="handleLeaveGame"
+                  >
+                    Spiel verlassen
+                  </button>
+                </div>
+                <div class="ml-3 inline-flex items-center gap-3 rounded-full border border-slate-700 bg-slate-900/80 px-4 py-2 shadow-md">
                   <span class="text-sm text-slate-300">Angemeldet als <span class="font-semibold">{{ accountName }}</span></span>
-                  <button class="text-sm text-red-400 hover:text-red-300" type="button" @click="handleLogout">
+                  <button class="text-sm text-red-400 hover:text-red-500" type="button" @click="handleLogout">
                     Abmelden
                   </button>
                 </div>

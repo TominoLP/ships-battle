@@ -36,8 +36,7 @@ watch(gameCode, (code) => {
 <template>
   <div class="space-y-4">
     <p class="text-sm text-slate-400">
-      Angemeldet als
-      <span class="font-semibold text-slate-200">{{ props.userName }}</span>
+      Erstelle ein neues Spiel oder trete einem bestehenden Spiel bei, indem du den Game Code eingibst.
     </p>
 
     <div v-if="showMode === 'none'" class="flex gap-2">

@@ -216,7 +216,21 @@ class BattleService
 
     public function resolveState(Player $player): array
     {
+        $player->loadMissing('game');
+        $game = $player->game;
         $enemy = $player->enemy();
+
+        $winnerData = null;
+        if ($game && $game->winner_player_id) {
+            $winner = Player::find($game->winner_player_id);
+            if ($winner) {
+                $winnerData = [
+                    'id' => $winner->id,
+                    'name' => $winner->name,
+                ];
+            }
+        }
+
         return [
             'player' => [
                 'id' => $player->id,
@@ -233,6 +247,13 @@ class BattleService
                 'isTurn' => (bool)$enemy->is_turn,
                 'isReady' => (bool)$enemy->is_ready,
             ] : null,
+            'game' => $game ? [
+                'id' => $game->id,
+                'code' => $game->code,
+                'status' => $game->status,
+                'winner_player_id' => $game->winner_player_id,
+            ] : null,
+            'winner' => $winnerData,
         ];
     }
 
