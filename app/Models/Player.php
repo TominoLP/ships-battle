@@ -17,7 +17,13 @@ use Illuminate\Support\Carbon;
  * @property string $name
  * @property array $board
  * @property boolean $is_turn
- *
+ * @property boolean $is_ready
+ * @property array $ships
+ * @property array $ability_usage
+ * @property int $turn_kills
+ * @property boolean $wants_rematch
+ * @property int $user_id
+ * 
  * @method static where(string $string, int $game_id)
  * @method static findOrFail(mixed $player_id)
  * @method static create(array $array)
@@ -28,6 +34,7 @@ class Player extends Model
 {
 
     use HasFactory;
+    
     protected $fillable = [
         'user_id',
         'game_id',

@@ -75,7 +75,11 @@ php artisan event:cache    || true
 
 # --- DB migrations (optional) ---
 if [ "${RUN_MIGRATIONS:-1}" = "1" ]; then
-  php artisan migrate --force || true
+  if [ "${RUN_SEED:-0}" = "1" ]; then
+    php artisan migrate --force --seed || true
+  else
+    php artisan migrate --force || true
+  fi
 fi
 
 echo "[entrypoint] Starting supervisor..."
