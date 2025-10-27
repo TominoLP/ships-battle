@@ -90,6 +90,11 @@ export function useGameState() {
     messages.value.unshift(`[${new Date().toLocaleTimeString()}] ${msg}`);
   }
 
+  function triggerLeaderboardRefresh() {
+    if (typeof window === 'undefined') return;
+    window.dispatchEvent(new CustomEvent('ships-battle:leaderboard:refresh'));
+  }
+
   function clearSession() {
     if (typeof window === 'undefined') return;
     try {
@@ -227,6 +232,10 @@ export function useGameState() {
           turnKills: number;
         };
         enemy: { id: number; name: string; isReady: boolean } | null;
+        shots?: {
+          player?: Array<{ x: number; y: number; result: string }>;
+          enemy?: Array<{ x: number; y: number; result: string }>;
+        };
         game?: { id: number; code: string; status: string; winner_player_id: number | null } | null;
         winner?: { id: number; name: string } | null;
       }>(GameController.state.get(id));
@@ -269,7 +278,28 @@ export function useGameState() {
             step.value = 'lobby';
           }
         }
-      } else {
+      }
+
+      if (Array.isArray(data?.shots?.player)) {
+        const nextEnemyBoard = createEmptyBoard();
+        for (const shot of data.shots.player) {
+          const x = Number(shot?.x);
+          const y = Number(shot?.y);
+          if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+          if (y < 0 || y >= nextEnemyBoard.length) continue;
+          if (x < 0 || x >= nextEnemyBoard[y].length) continue;
+
+          const result = String(shot?.result ?? '').toLowerCase();
+          if (result === 'hit' || result === 'sunk') {
+            nextEnemyBoard[y][x] = 2;
+          } else if (result === 'miss') {
+            nextEnemyBoard[y][x] = 1;
+          } else if (result === 'already') {
+            const current = nextEnemyBoard[y][x];
+            nextEnemyBoard[y][x] = current === 2 ? 2 : 1;
+          }
+        }
+        enemyBoard.value = nextEnemyBoard;
       }
     } catch (err: any) {
       const status: number | undefined = err?.response?.status;
@@ -495,6 +525,7 @@ export function useGameState() {
       rematchState.value = 'idle';
       rematchError.value = null;
       pushMsg(won ? 'You won.' : `You lost. Winner: ${winner.name}`);
+      triggerLeaderboardRefresh();
     });
 
     socket.value.on('player_joined', ({ player }: any) => {
@@ -621,6 +652,7 @@ export function useGameState() {
           youWon.value = data.winner.id === playerId.value;
           winnerName.value = data.winner.name;
         }
+        triggerLeaderboardRefresh();
       }
     } catch (e: any) {
       const resp: Response | undefined = e?.response;
@@ -705,6 +737,7 @@ export function useGameState() {
         youWon.value = data.winner.id === playerId.value;
         winnerName.value = data.winner.name;
         gameOver.value = true;
+        triggerLeaderboardRefresh();
       }
     } catch (e: any) {
       const resp: Response | undefined = e?.response;

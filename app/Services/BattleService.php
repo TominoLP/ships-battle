@@ -220,6 +220,43 @@ class BattleService
         $game = $player->game;
         $enemy = $player->enemy();
 
+        $playerShots = [];
+        $enemyShots = [];
+
+        if ($game) {
+            $playerShots = Move::query()
+                ->where('game_id', $game->id)
+                ->where('player_id', $player->id)
+                ->orderBy('id')
+                ->get(['x', 'y', 'result'])
+                ->map(static function (Move $move) {
+                    return [
+                        'x' => (int)$move->x,
+                        'y' => (int)$move->y,
+                        'result' => (string)$move->result,
+                    ];
+                })
+                ->values()
+                ->all();
+
+            if ($enemy) {
+                $enemyShots = Move::query()
+                    ->where('game_id', $game->id)
+                    ->where('player_id', $enemy->id)
+                    ->orderBy('id')
+                    ->get(['x', 'y', 'result'])
+                    ->map(static function (Move $move) {
+                        return [
+                            'x' => (int)$move->x,
+                            'y' => (int)$move->y,
+                            'result' => (string)$move->result,
+                        ];
+                    })
+                    ->values()
+                    ->all();
+            }
+        }
+
         $winnerData = null;
         if ($game && $game->winner_player_id) {
             $winner = Player::find($game->winner_player_id);
@@ -247,6 +284,10 @@ class BattleService
                 'isTurn' => (bool)$enemy->is_turn,
                 'isReady' => (bool)$enemy->is_ready,
             ] : null,
+            'shots' => [
+                'player' => $playerShots,
+                'enemy' => $enemyShots,
+            ],
             'game' => $game ? [
                 'id' => $game->id,
                 'code' => $game->code,

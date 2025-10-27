@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, reactive, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import StatsController from '@/actions/App/Http/Controllers/StatsController';
 import { api } from '@/src/composables/useApi';
 import type { LeaderboardEntry } from '@/src/types';
@@ -12,13 +12,10 @@ const tabs: Array<{ key: TabKey; label: string }> = [
 ];
 
 const activeTab = ref<TabKey>('ships');
-const cache = reactive<Record<TabKey, LeaderboardEntry[]>>({
-  ships: [],
-  wins: [],
-});
 const leaderboard = ref<LeaderboardEntry[]>([]);
 const loading = ref(false);
 const error = ref('');
+let requestToken = 0;
 
 const valueTitle = computed(() => {
   switch (activeTab.value) {
@@ -39,22 +36,18 @@ function displayValue(entry: LeaderboardEntry): string {
 }
 
 async function load(metric: TabKey) {
-  leaderboard.value = cache[metric];
-
-  if (cache[metric]?.length) {
-    return;
-  }
-
-  loading.value = true;
+  const token = ++requestToken;
+  loading.value = leaderboard.value.length === 0;
   error.value = '';
   try {
     const data = await api<{ players: LeaderboardEntry[] }>(
       StatsController.leaderboard.get({ metric })
     );
     const list = data?.players ?? [];
-    cache[metric] = list;
+    if (token !== requestToken) return;
     leaderboard.value = list;
   } catch (err) {
+    if (token !== requestToken) return;
     console.error('[Leaderboard] failed to fetch', err);
     leaderboard.value = [];
     if (err instanceof Error) {
@@ -63,13 +56,29 @@ async function load(metric: TabKey) {
       error.value = 'Leaderboard konnte nicht geladen werden.';
     }
   } finally {
-    loading.value = false;
+    if (token === requestToken) {
+      loading.value = false;
+    }
   }
 }
 
 watch(activeTab, (metric) => {
   void load(metric);
 }, { immediate: true });
+
+const refreshHandler = () => {
+  void load(activeTab.value);
+};
+
+onMounted(() => {
+  if (typeof window === 'undefined') return;
+  window.addEventListener('ships-battle:leaderboard:refresh', refreshHandler);
+});
+
+onBeforeUnmount(() => {
+  if (typeof window === 'undefined') return;
+  window.removeEventListener('ships-battle:leaderboard:refresh', refreshHandler);
+});
 </script>
 
 <template>
@@ -160,5 +169,3 @@ watch(activeTab, (metric) => {
   transition: transform 0.25s ease;
 }
 </style>
-
-
