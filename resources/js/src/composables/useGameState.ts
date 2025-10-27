@@ -271,7 +271,14 @@ export function useGameState() {
         }
       } else {
       }
-    } catch (err) {
+    } catch (err: any) {
+      const status: number | undefined = err?.response?.status;
+      if (status === 404 || status === 410) {
+        resetForNewGame();
+        messages.value = [`[${new Date().toLocaleTimeString()}] The match ended because the opponent left.`];
+        await refreshAvailableGames();
+        return;
+      }
       console.error('[GameState] Failed to refresh state', err);
     }
   }
@@ -320,6 +327,20 @@ export function useGameState() {
     step.value = 'placing';
     rematchState.value = 'idle';
     rematchError.value = null;
+  }
+  
+  async function leaveGame() {
+    const id = playerId.value;
+    if (!id) return;
+
+    try {
+      await api(GameController.leaveGame.post(id));
+    } catch (err) {
+      console.error('[GameState] Failed to leave game', err);
+    } finally {
+      resetForNewGame();
+      await refreshAvailableGames();
+    }
   }
 
   function resetForNewGame() {
@@ -489,6 +510,15 @@ export function useGameState() {
       pushMsg(`Turn: ${player.name}`);
       myTurn.value = player.id === playerId.value;
       turnKills.value = 0;
+    });
+
+    socket.value.on('game_aborted', (payload: any) => {
+      const reason = payload?.reason === 'opponent_left'
+        ? 'Opponent left the game. Returning to lobby.'
+        : 'Game aborted. Returning to lobby.';
+      resetForNewGame();
+      messages.value = [`[${new Date().toLocaleTimeString()}] ${reason}`];
+      void refreshAvailableGames();
     });
 
     socket.value.on('shot_fired', (data: any) => {
@@ -709,7 +739,7 @@ export function useGameState() {
     step, gameCode, gameId, playerId, isReady, myTurn, messages,
     myBoard, enemyBoard, enemyName, enemySunkShips, gameOver, youWon, winnerName,
     abilityUsage, turnKills, rematchState, rematchError,
-    createGame, joinGame, resetForNewGame, readyUp, fire, useAbility, requestRematch,
+    createGame, joinGame, resetForNewGame, readyUp, fire, useAbility, requestRematch, leaveGame,
     gamesAvailable, refreshAvailableGames,
     pushMsg
   };

@@ -133,6 +133,7 @@ function createChannel(name: string, messages: Ref<string[]>): { echo: Echo<'pus
   }
 
   const channel = echo.channel(name);
+  // @ts-ignore
   return { echo, channel };
 }
 

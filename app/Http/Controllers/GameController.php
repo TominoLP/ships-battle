@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\GameAborted;
 use App\Events\GameCreated;
 use App\Events\PlayerJoined;
 use App\Events\PlayerReady;
 use App\Events\PublicGameAvailable;
+use App\Events\PublicGameUnavailable;
 use App\Events\RematchReady;
 use App\Models\Game;
 use App\Models\Player;
@@ -36,8 +38,13 @@ class GameController extends Controller
             return response()->json(['error' => 'Authentication required'], 401);
         }
 
-        $game = Game::where('code', $request->code)->where('status', '!=', Game::STATUS_COMPLETED)->firstOrFail();
-
+        $game = Game::where('code', $request->code)->where('status', '!=', Game::STATUS_COMPLETED)->first();
+        if(!$game) {
+            $game = Game::where('code', $request->code);
+            $game->delete();
+            return response()->json(['error' => 'Game not found or already completed'], 404);
+        }
+        
         $name = trim((string)($user->name ?? ''));
         if ($name === '') {
             $name = 'Player ' . $user->id;
@@ -446,6 +453,9 @@ class GameController extends Controller
         $games = Game::query()
             ->where('public', true)
             ->orderBy('created_at', 'desc')
+            ->with('players')
+            ->has('players', '=', 1)
+            ->where('created_at', '>=', now()->subMinutes(30))
             ->get()
             ->map(static function (Game $game) {
                 return [
@@ -468,5 +478,48 @@ class GameController extends Controller
         }
 
         return response()->json($this->battleService->resolveState($player));
+    }
+    
+    public function leaveGame(Request $request, Player $player): JsonResponse
+    {
+        $userId = $request->user()?->id;
+
+        if (!$userId || $player->user_id !== $userId) {
+            return response()->json(['error' => 'Forbidden'], 403);
+        }
+
+        $game = $player->game;
+
+        if (!$game) {
+            return response()->json(['error' => 'Game not found'], 404);
+        }
+
+        $gameId = $game->id;
+        $gameCode = $game->code;
+        $wasPublic = (bool)$game->public;
+        $opponentCount = $game->players()
+            ->where('players.id', '!=', $player->id)
+            ->count();
+
+        DB::transaction(static function () use ($gameId) {
+            Player::query()
+                ->where('game_id', $gameId)
+                ->delete();
+
+            Game::query()
+                ->whereKey($gameId)
+                ->delete();
+        });
+
+        if ($wasPublic) {
+            broadcast(new PublicGameUnavailable($gameId));
+        }
+
+        if ($opponentCount > 0) {
+            broadcast(new GameAborted($gameId, $gameCode));
+        }
+
+        return response()->json(['message' => 'Left the game']);
+        
     }
 }

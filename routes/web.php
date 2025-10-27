@@ -26,6 +26,8 @@ Route::prefix('api')->group(function () {
             Route::post('/placement/random', [GameController::class, 'randomPlacement']);
             Route::post('/rematch', [GameController::class, 'rematch']);
             Route::get('/state/{player}', [GameController::class, 'state']);
+            Route::get('/available', [GameController::class, 'getAvailableGames']);
+            Route::post('/leave/{player}', [GameController::class, 'leaveGame']);
         });
 
         Route::prefix('stats')->group(function () {

@@ -148,7 +148,7 @@ function handleCreateGame(options?: { public?: boolean }) {
 }
 
 function handleLeaveGame() {
-  gs.resetForNewGame();
+  gs.leaveGame();
   resetPlacementState();
 }
 
@@ -542,7 +542,6 @@ async function onEnemyCellClick(x: number, y: number) {
               </div>
 
               <p class="mt-2 text-slate-400">{{ statusMessage }}</p>
-              {{gs.gamesAvailable}}
             </div>
           </div>
 
@@ -557,6 +556,27 @@ async function onEnemyCellClick(x: number, y: number) {
               />
             </div>
             <LeaderboardPanel :userName="accountName"/>
+            <div v-if="gs.gamesAvailable.length != 0" class="rounded-xl border border-slate-700 bg-slate-900/80 p-6 shadow-xl">
+              <h2 class="mb-4 text-lg font-semibold text-slate-200">Verfügbare Spiele</h2>
+              <div v-for="game in gs.gamesAvailable">
+                <div
+                  class="mb-3 flex items-center justify-between rounded-lg border border-slate-600 bg-slate-800/70 px-4 py-3"
+                  :key="game.code"
+                >
+                  <div>
+                    <span class="font-mono font-semibold text-slate-200">{{ game.code }}</span>
+                    <span class="ml-2 text-sm text-slate-400">Erstellt von {{ game.enemy_name }}</span>
+                  </div>
+                  <button
+                    class="rounded-lg bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-500"
+                    @click="gs.gameCode = game.code; gs.joinGame()"
+                  >
+                    Beitreten
+                  </button>
+                </div>
+              </div>
+              
+            </div>
           </div>
 
           <!-- LOBBY -->
