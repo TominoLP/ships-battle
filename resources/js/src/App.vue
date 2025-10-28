@@ -21,6 +21,7 @@ import type { PlacedShip, ShipSpec } from '@/src/types';
 import GameControllerRoutes from '@/actions/App/Http/Controllers/GameController';
 import { api } from '@/src/composables/useApi';
 import { useAuth } from '@/src/composables/useAuth';
+import Progress from '@/src/components/Stats/Progress.vue';
 
 const appVersion: string = __APP_VERSION__
 
@@ -30,6 +31,11 @@ const auth = useAuth();
 const booting = auth.booting;
 const isAuthenticated = computed(() => !!auth.user.value);
 const accountName = computed(() => auth.user.value?.name ?? '');
+
+const showAchievements = ref(false);
+
+const userLevel = computed(() => auth.user.value?.level ?? null);
+const userAchievements = computed(() => auth.user.value?.achievements ?? []);
 
 // Fleet spec
 const fleet: ShipSpec[] = [
@@ -527,6 +533,15 @@ async function onEnemyCellClick(x: number, y: number) {
                   <i class="fa-brands fa-github"></i>
                   <span class="sr-only">GitHub: ships-battle</span>
                 </a>
+                <a
+                  @click="showAchievements = true"
+                  rel="noopener noreferrer"
+                  title="Achievements"
+                  class="inline-flex items-center gap-3 rounded-full border border-amber-300  ml-3 bg-slate-900/80 px-4 py-2 shadow-md hover:bg-slate-800/80  focus:outline-none focus:ring-2 focus:ring-blue-500/60"
+                >
+                  <i class="text-amber-300 fa-solid fa-trophy"></i>
+                  <span class="sr-only">Achievements</span>
+                </a>
               </div>
 
               <div class="flex items-center justify-center gap-3">
@@ -785,6 +800,13 @@ async function onEnemyCellClick(x: number, y: number) {
         </template>
       </template>
     </div>
+    
+    <Progress
+      v-model:open="showAchievements"
+      :level="userLevel"
+      :achievements="userAchievements"
+    />
+    
     <div class="absolute text-slate-400 bottom-0 left-0">ships-app: v{{appVersion}}</div>
   </div>
 </template>

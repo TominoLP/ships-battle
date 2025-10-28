@@ -11,6 +11,7 @@ use App\Events\PublicGameUnavailable;
 use App\Events\RematchReady;
 use App\Models\Game;
 use App\Models\Player;
+use App\Services\AchievementService;
 use App\Services\BattleService;
 use App\Services\PlacementService;
 use Illuminate\Http\JsonResponse;
@@ -20,9 +21,11 @@ use InvalidArgumentException;
 
 class GameController extends Controller
 {
+    
     public function __construct(
         private readonly PlacementService $placementService,
-        private readonly BattleService $battleService
+        private readonly BattleService $battleService,
+        private readonly AchievementService $achievements
     ) {
     }
 
@@ -38,10 +41,12 @@ class GameController extends Controller
             return response()->json(['error' => 'Authentication required'], 401);
         }
 
-        $game = Game::where('code', $request->code)->where('status', '!=', Game::STATUS_COMPLETED)->first();
-        if(!$game) {
-            $game = Game::where('code', $request->code);
-            $game->delete();
+        $game = Game::query()
+            ->where('code', $request->code)
+            ->where('status', '!=', Game::STATUS_COMPLETED)
+            ->first();
+
+        if (!$game) {
             return response()->json(['error' => 'Game not found or already completed'], 404);
         }
         
@@ -180,6 +185,7 @@ class GameController extends Controller
             $current = $game->players()->where('is_turn', true)->first();
             broadcast(new \App\Events\GameStarted($game, $current));
             $started = true;
+            $this->awardGamesPlayed($game);
         }
 
         return response()->json(['message' => 'Ready', 'started' => $started]);
@@ -228,6 +234,13 @@ class GameController extends Controller
 
         if ($payload instanceof JsonResponse) {
             return $payload;
+        }
+
+        if (is_array($payload)) {
+            $actor = Player::with('user')->find($request->integer('player_id'));
+            if ($actor) {
+                $this->awardFromShot($actor, $payload);
+            }
         }
 
         return response()->json($payload);
@@ -283,6 +296,13 @@ class GameController extends Controller
 
         if ($payload instanceof JsonResponse) {
             return $payload;
+        }
+
+        if (is_array($payload)) {
+            $actor = Player::with('user')->find($request->integer('player_id'));
+            if ($actor) {
+                $this->awardFromAbility($actor, $payload);
+            }
         }
 
         return response()->json($payload);
@@ -522,4 +542,99 @@ class GameController extends Controller
         return response()->json(['message' => 'Left the game']);
         
     }
+
+    /**
+     * Grant "games_played" to both players when a game actually starts.
+     */
+    protected function awardGamesPlayed(Game $game): void
+    {
+        $game->loadMissing('players.user');
+        foreach ($game->players as $p) {
+            if ($p->user) {
+                $this->achievements->increment($p->user, 'games_played', 1);
+            }
+        }
+    }
+
+    /**
+     * After a shot resolves, award ship destruction, multi-kills, and wins (if ended).
+     */
+    protected function awardFromShot(Player $actor, array $payload): void
+    {
+        $this->awardCombatProgress($actor, $payload);
+    }
+
+    /**
+     * After an ability resolves, increment abilities_used and special events.
+     */
+    protected function awardFromAbility(Player $actor, array $payload): void
+    {
+        $actor->loadMissing('user');
+        if (!$actor->user) return;
+
+        // Count ability usage
+        $this->achievements->increment($actor->user, 'abilities_used', 1);
+
+        $this->awardCombatProgress($actor, $payload);
+
+        // Got a bomb?
+        $gotBomb = $payload['got_bomb']
+            ?? (($payload['granted_item'] ?? null) === 'bomb');
+        if ($gotBomb) {
+            $this->achievements->unlockEvent($actor->user, 'got_bomb');
+        }
+
+        // First-turn scouting feats (if payload exposes stats)
+        $revealedFirstTurn = $payload['ships_revealed_first_turn']
+            ?? ($payload['stats']['revealed_first_turn'] ?? null);
+
+        if (is_numeric($revealedFirstTurn)) {
+            $r = (int)$revealedFirstTurn;
+            if ($r >= 8) {
+                $this->achievements->unlockEvent($actor->user, 'first_turn_scout_8');
+            } elseif ($r >= 6) {
+                $this->achievements->unlockEvent($actor->user, 'first_turn_scout_6');
+            }
+        }
+    }
+
+    protected function awardCombatProgress(Player $actor, array $payload): void
+    {
+        $actor->loadMissing('user');
+        if (!$actor->user) {
+            return;
+        }
+
+        $sunk = $payload['sunk'] ?? [];
+        $destroyed = is_array($sunk) ? count($sunk) : 0;
+        if ($destroyed > 0) {
+            $this->achievements->increment($actor->user, 'ships_destroyed', $destroyed);
+        }
+
+        $turnKills = $payload['turnKills']
+            ?? ($payload['player']['turnKills'] ?? null);
+
+        if (is_numeric($turnKills)) {
+            $kills = (int)$turnKills;
+            if ($kills >= 5) {
+                $this->achievements->unlockEvent($actor->user, 'multi_kill_5_in_turn');
+            } elseif ($kills >= 3) {
+                $this->achievements->unlockEvent($actor->user, 'multi_kill_3_in_turn');
+            }
+        }
+
+        $gameOver = (bool)($payload['gameOver'] ?? false);
+        $winnerId = $payload['winner']['id']
+            ?? $payload['winner_player_id']
+            ?? $payload['winner_id']
+            ?? null;
+
+        if ($gameOver && $winnerId) {
+            $winner = Player::with('user')->find($winnerId);
+            if ($winner?->user) {
+                $this->achievements->increment($winner->user, 'games_won', 1);
+            }
+        }
+    }
+
 }

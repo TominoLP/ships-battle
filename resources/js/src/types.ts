@@ -50,3 +50,36 @@ export type PlaceShipsResponse = {
 export type ShootResponse = {
   result: 'hit' | 'miss' | 'sunk' | string;
 };
+
+export type LevelEdge = {
+  id: number;
+  name: string;
+  min_points: number;
+};
+
+export type LevelInfo = {
+  points: number;
+  current: LevelEdge | null;
+  next: (LevelEdge & { points_to_go: number }) | null;
+};
+
+export type AchievementProgress = {
+  value: number;
+  highest_step: number | null;
+  next_step: number | null;
+  remaining: number | null;
+  completed: boolean;
+  unlocked_at: string | null;
+};
+
+export type StepsLike = Map<number, number> | Record<string, number>;
+
+export type AchievementItem = {
+  key: string;
+  name: string;
+  description?: string | null;
+  type: 'counter' | 'event';
+  steps: StepsLike;
+  progress: AchievementProgress;
+  event_points: number;
+};
