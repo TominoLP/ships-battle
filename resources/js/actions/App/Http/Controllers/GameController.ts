@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\GameController::create
-* @see app/Http/Controllers/GameController.php:94
+* @see app/Http/Controllers/GameController.php:92
 * @route '/api/game/create'
 */
 export const create = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -16,7 +16,7 @@ create.definition = {
 
 /**
 * @see \App\Http\Controllers\GameController::create
-* @see app/Http/Controllers/GameController.php:94
+* @see app/Http/Controllers/GameController.php:92
 * @route '/api/game/create'
 */
 create.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ create.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\GameController::create
-* @see app/Http/Controllers/GameController.php:94
+* @see app/Http/Controllers/GameController.php:92
 * @route '/api/game/create'
 */
 create.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -35,7 +35,7 @@ create.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\GameController::join
-* @see app/Http/Controllers/GameController.php:32
+* @see app/Http/Controllers/GameController.php:30
 * @route '/api/game/join'
 */
 export const join = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -50,7 +50,7 @@ join.definition = {
 
 /**
 * @see \App\Http\Controllers\GameController::join
-* @see app/Http/Controllers/GameController.php:32
+* @see app/Http/Controllers/GameController.php:30
 * @route '/api/game/join'
 */
 join.url = (options?: RouteQueryOptions) => {
@@ -59,7 +59,7 @@ join.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\GameController::join
-* @see app/Http/Controllers/GameController.php:32
+* @see app/Http/Controllers/GameController.php:30
 * @route '/api/game/join'
 */
 join.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -69,7 +69,7 @@ join.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\GameController::shoot
-* @see app/Http/Controllers/GameController.php:194
+* @see app/Http/Controllers/GameController.php:192
 * @route '/api/game/shoot'
 */
 export const shoot = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -84,7 +84,7 @@ shoot.definition = {
 
 /**
 * @see \App\Http\Controllers\GameController::shoot
-* @see app/Http/Controllers/GameController.php:194
+* @see app/Http/Controllers/GameController.php:192
 * @route '/api/game/shoot'
 */
 shoot.url = (options?: RouteQueryOptions) => {
@@ -93,7 +93,7 @@ shoot.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\GameController::shoot
-* @see app/Http/Controllers/GameController.php:194
+* @see app/Http/Controllers/GameController.php:192
 * @route '/api/game/shoot'
 */
 shoot.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -103,7 +103,7 @@ shoot.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\GameController::placeShips
-* @see app/Http/Controllers/GameController.php:134
+* @see app/Http/Controllers/GameController.php:132
 * @route '/api/game/place-ships'
 */
 export const placeShips = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -118,7 +118,7 @@ placeShips.definition = {
 
 /**
 * @see \App\Http\Controllers\GameController::placeShips
-* @see app/Http/Controllers/GameController.php:134
+* @see app/Http/Controllers/GameController.php:132
 * @route '/api/game/place-ships'
 */
 placeShips.url = (options?: RouteQueryOptions) => {
@@ -127,7 +127,7 @@ placeShips.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\GameController::placeShips
-* @see app/Http/Controllers/GameController.php:134
+* @see app/Http/Controllers/GameController.php:132
 * @route '/api/game/place-ships'
 */
 placeShips.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -137,7 +137,7 @@ placeShips.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\GameController::useAbility
-* @see app/Http/Controllers/GameController.php:249
+* @see app/Http/Controllers/GameController.php:247
 * @route '/api/game/ability'
 */
 export const useAbility = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -152,7 +152,7 @@ useAbility.definition = {
 
 /**
 * @see \App\Http\Controllers\GameController::useAbility
-* @see app/Http/Controllers/GameController.php:249
+* @see app/Http/Controllers/GameController.php:247
 * @route '/api/game/ability'
 */
 useAbility.url = (options?: RouteQueryOptions) => {
@@ -161,7 +161,7 @@ useAbility.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\GameController::useAbility
-* @see app/Http/Controllers/GameController.php:249
+* @see app/Http/Controllers/GameController.php:247
 * @route '/api/game/ability'
 */
 useAbility.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -205,7 +205,7 @@ randomPlacement.post = (options?: RouteQueryOptions): RouteDefinition<'post'> =>
 
 /**
 * @see \App\Http\Controllers\GameController::rematch
-* @see app/Http/Controllers/GameController.php:311
+* @see app/Http/Controllers/GameController.php:309
 * @route '/api/game/rematch'
 */
 export const rematch = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -220,7 +220,7 @@ rematch.definition = {
 
 /**
 * @see \App\Http\Controllers\GameController::rematch
-* @see app/Http/Controllers/GameController.php:311
+* @see app/Http/Controllers/GameController.php:309
 * @route '/api/game/rematch'
 */
 rematch.url = (options?: RouteQueryOptions) => {
@@ -229,7 +229,7 @@ rematch.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\GameController::rematch
-* @see app/Http/Controllers/GameController.php:311
+* @see app/Http/Controllers/GameController.php:309
 * @route '/api/game/rematch'
 */
 rematch.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -239,7 +239,7 @@ rematch.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\GameController::state
-* @see app/Http/Controllers/GameController.php:492
+* @see app/Http/Controllers/GameController.php:493
 * @route '/api/game/state/{player}'
 */
 export const state = (args: { player: number | { id: number } } | [player: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -254,7 +254,7 @@ state.definition = {
 
 /**
 * @see \App\Http\Controllers\GameController::state
-* @see app/Http/Controllers/GameController.php:492
+* @see app/Http/Controllers/GameController.php:493
 * @route '/api/game/state/{player}'
 */
 state.url = (args: { player: number | { id: number } } | [player: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -287,7 +287,7 @@ state.url = (args: { player: number | { id: number } } | [player: number | { id:
 
 /**
 * @see \App\Http\Controllers\GameController::state
-* @see app/Http/Controllers/GameController.php:492
+* @see app/Http/Controllers/GameController.php:493
 * @route '/api/game/state/{player}'
 */
 state.get = (args: { player: number | { id: number } } | [player: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -297,7 +297,7 @@ state.get = (args: { player: number | { id: number } } | [player: number | { id:
 
 /**
 * @see \App\Http\Controllers\GameController::state
-* @see app/Http/Controllers/GameController.php:492
+* @see app/Http/Controllers/GameController.php:493
 * @route '/api/game/state/{player}'
 */
 state.head = (args: { player: number | { id: number } } | [player: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -307,7 +307,7 @@ state.head = (args: { player: number | { id: number } } | [player: number | { id
 
 /**
 * @see \App\Http\Controllers\GameController::getAvailableGames
-* @see app/Http/Controllers/GameController.php:471
+* @see app/Http/Controllers/GameController.php:472
 * @route '/api/game/available'
 */
 export const getAvailableGames = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -322,7 +322,7 @@ getAvailableGames.definition = {
 
 /**
 * @see \App\Http\Controllers\GameController::getAvailableGames
-* @see app/Http/Controllers/GameController.php:471
+* @see app/Http/Controllers/GameController.php:472
 * @route '/api/game/available'
 */
 getAvailableGames.url = (options?: RouteQueryOptions) => {
@@ -331,7 +331,7 @@ getAvailableGames.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\GameController::getAvailableGames
-* @see app/Http/Controllers/GameController.php:471
+* @see app/Http/Controllers/GameController.php:472
 * @route '/api/game/available'
 */
 getAvailableGames.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -341,7 +341,7 @@ getAvailableGames.get = (options?: RouteQueryOptions): RouteDefinition<'get'> =>
 
 /**
 * @see \App\Http\Controllers\GameController::getAvailableGames
-* @see app/Http/Controllers/GameController.php:471
+* @see app/Http/Controllers/GameController.php:472
 * @route '/api/game/available'
 */
 getAvailableGames.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -351,7 +351,7 @@ getAvailableGames.head = (options?: RouteQueryOptions): RouteDefinition<'head'> 
 
 /**
 * @see \App\Http\Controllers\GameController::leaveGame
-* @see app/Http/Controllers/GameController.php:503
+* @see app/Http/Controllers/GameController.php:504
 * @route '/api/game/leave/{player}'
 */
 export const leaveGame = (args: { player: number | { id: number } } | [player: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -366,7 +366,7 @@ leaveGame.definition = {
 
 /**
 * @see \App\Http\Controllers\GameController::leaveGame
-* @see app/Http/Controllers/GameController.php:503
+* @see app/Http/Controllers/GameController.php:504
 * @route '/api/game/leave/{player}'
 */
 leaveGame.url = (args: { player: number | { id: number } } | [player: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
@@ -399,7 +399,7 @@ leaveGame.url = (args: { player: number | { id: number } } | [player: number | {
 
 /**
 * @see \App\Http\Controllers\GameController::leaveGame
-* @see app/Http/Controllers/GameController.php:503
+* @see app/Http/Controllers/GameController.php:504
 * @route '/api/game/leave/{player}'
 */
 leaveGame.post = (args: { player: number | { id: number } } | [player: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({

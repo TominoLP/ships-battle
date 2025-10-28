@@ -45,7 +45,7 @@ test('authenticated user can create a game', function () {
     $response = $this->actingAs($user)->postJson('/api/game/create');
 
     if ($response->status() === 500) {
-        dump('Create Game Error - Status: ' . $response->status());
+        dump('Create Game Error - Status: '.$response->status());
         dump('Response body:', $response->json());
         dump('Exception:', $response->exception?->getMessage());
         dd('Stack trace:', $response->exception?->getTraceAsString());
@@ -80,7 +80,7 @@ test('create game uses default name when user has empty name', function () {
 
     $this->assertDatabaseHas('players', [
         'user_id' => $user->id,
-        'name' => 'Player ' . $user->id,
+        'name' => 'Player '.$user->id,
     ]);
 });
 

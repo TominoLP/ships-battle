@@ -11,9 +11,7 @@ class PublicGameAvailable implements ShouldBroadcastNow
 {
     use SerializesModels;
 
-    public function __construct(public Game $game)
-    {
-    }
+    public function __construct(public Game $game) {}
 
     public function broadcastOn(): Channel
     {

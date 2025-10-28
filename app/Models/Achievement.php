@@ -18,8 +18,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $description
  * @property string $category
  * @property string $progress_type
- * @property boolean $is_tiered
+ * @property bool $is_tiered
  * @property int $event_points
+ *
  * @method static where(string $string, string $key)
  * @method static create(array $array)
  * @method static updateOrCreate(array $array, array $array1)
@@ -33,7 +34,7 @@ class Achievement extends Model
         'updated_at' => 'datetime',
         'is_tiered' => 'boolean',
     ];
-    
+
     protected $fillable = [
         'key',
         'name',
@@ -41,9 +42,8 @@ class Achievement extends Model
         'category',
         'progress_type',
         'is_tiered',
-        'event_points'
+        'event_points',
     ];
-
 
     public function steps(): HasMany
     {

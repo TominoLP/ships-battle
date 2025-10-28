@@ -3,14 +3,11 @@
 namespace App\Services;
 
 use Illuminate\Support\Collection;
-use Illuminate\Support\ServiceProvider;
 use InvalidArgumentException;
 
 class PlacementService
 {
-    public function __construct(private int $boardSize = 12)
-    {
-    }
+    public function __construct(private int $boardSize = 12) {}
 
     public function emptyBoard(): array
     {
@@ -36,12 +33,12 @@ class PlacementService
         $board = $this->emptyBoard();
 
         foreach ($collection as $ship) {
-            $x = (int)($ship['x'] ?? 0);
-            $y = (int)($ship['y'] ?? 0);
-            $size = (int)($ship['size'] ?? 0);
-            $dir = (string)($ship['dir'] ?? 'H');
+            $x = (int) ($ship['x'] ?? 0);
+            $y = (int) ($ship['y'] ?? 0);
+            $size = (int) ($ship['size'] ?? 0);
+            $dir = (string) ($ship['dir'] ?? 'H');
 
-            if (!$this->canPlace($board, $x, $y, $size, $dir)) {
+            if (! $this->canPlace($board, $x, $y, $size, $dir)) {
                 throw new InvalidArgumentException('Ship placement invalid (bounds/overlap/touch)');
             }
 
@@ -56,7 +53,7 @@ class PlacementService
         for ($i = 0; $i < $size; $i++) {
             $cx = $dir === 'H' ? $x + $i : $x;
             $cy = $dir === 'V' ? $y + $i : $y;
-            if (!$this->inBounds($cx, $cy)) {
+            if (! $this->inBounds($cx, $cy)) {
                 return false;
             }
             if (($board[$cy][$cx] ?? 0) !== 0) {
@@ -102,7 +99,7 @@ class PlacementService
         foreach ($palette as $size) {
             $placed = false;
             $tries = 0;
-            while (!$placed) {
+            while (! $placed) {
                 if ($tries++ > 1000) {
                     throw new InvalidArgumentException('Unable to place fleet randomly');
                 }

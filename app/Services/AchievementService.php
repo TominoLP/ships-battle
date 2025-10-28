@@ -6,11 +6,9 @@ use App\Events\AchievementUnlocked;
 use App\Events\NewLevel;
 use App\Models\Achievement;
 use App\Models\Level;
-use App\Models\Player;
-use App\Models\UserAchievement;
 use App\Models\User;
+use App\Models\UserAchievement;
 use Illuminate\Support\Facades\DB;
-
 
 class AchievementService
 {
@@ -31,7 +29,7 @@ class AchievementService
 
             if ($newHighest && ($userAchievement->highest_step_unlocked === null || $newHighest > $userAchievement->highest_step_unlocked)) {
                 $gained = $steps
-                    ->where('threshold', '>', (int)($userAchievement->highest_step_unlocked ?? 0))
+                    ->where('threshold', '>', (int) ($userAchievement->highest_step_unlocked ?? 0))
                     ->where('threshold', '<=', $newHighest)
                     ->sum('points');
 
@@ -80,7 +78,7 @@ class AchievementService
 
     protected function addPointsAndUpdateLevel(User $user, int $points, Achievement $achievement, ?int $stepThreshold = null): void
     {
-        $prevTotal = (int)$user->total_achievement_points;
+        $prevTotal = (int) $user->total_achievement_points;
         $prevLevel = $user->current_level_id ? Level::find($user->current_level_id) : null;
 
         $user->total_achievement_points = $prevTotal + $points;
@@ -92,7 +90,7 @@ class AchievementService
         $user->current_level_id = $newLevel?->id;
         $user->save();
 
-        event(new AchievementUnlocked($user, $achievement, $stepThreshold, $points, (int)$user->total_achievement_points));
+        event(new AchievementUnlocked($user, $achievement, $stepThreshold, $points, (int) $user->total_achievement_points));
 
         if (($newLevel?->id ?? null) !== ($prevLevel?->id ?? null) && $newLevel) {
             event(new NewLevel($user, $newLevel, $prevLevel));
@@ -106,7 +104,7 @@ class AchievementService
             $achievement,
             $stepThreshold,
             $pointsAwarded,
-            (int)$user->total_achievement_points
+            (int) $user->total_achievement_points
         ));
     }
 }

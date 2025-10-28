@@ -11,13 +11,10 @@ class PlayerReady implements ShouldBroadcastNow
 {
     use SerializesModels;
 
-    public function __construct(public Player $player)
-    {
-    }
+    public function __construct(public Player $player) {}
 
     public function broadcastOn(): Channel
     {
-        // Broadcast to the game channel of this player
         return new Channel("game.{$this->player->game_id}");
     }
 

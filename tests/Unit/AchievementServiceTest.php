@@ -6,9 +6,7 @@ use App\Models\Achievement;
 use App\Models\Level;
 use App\Models\User;
 use App\Services\AchievementService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
-use Tests\TestCase;
 
 function makeLevel(string $name, int $min): Level
 {
@@ -26,7 +24,7 @@ function makeTestAchievement(string $key, array $steps = [], int $eventPoints = 
         'description' => null,
         'category' => 'test',
         'progress_type' => empty($steps) ? 'event' : 'counter',
-        'is_tiered' => !empty($steps),
+        'is_tiered' => ! empty($steps),
         'event_points' => $eventPoints,
     ]);
 

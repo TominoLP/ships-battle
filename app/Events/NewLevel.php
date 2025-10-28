@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Events;
 
 use App\Models\Level;
@@ -17,9 +16,7 @@ class NewLevel implements ShouldBroadcastNow
         public User $user,
         public Level $level,
         public Level|null $previousLevel
-    )
-    {
-    }
+    ) {}
 
     public function broadcastOn(): Channel
     {
@@ -37,12 +34,12 @@ class NewLevel implements ShouldBroadcastNow
             'level' => [
                 'id' => $this->level->id,
                 'name' => $this->level->name,
-                'min_points' => (int)$this->level->min_points,
+                'min_points' => (int) $this->level->min_points,
             ],
             'previous' => $this->previousLevel ? [
                 'id' => $this->previousLevel->id,
                 'name' => $this->previousLevel->name,
-                'min_points' => (int)$this->previousLevel->min_points,
+                'min_points' => (int) $this->previousLevel->min_points,
             ] : null,
         ];
     }

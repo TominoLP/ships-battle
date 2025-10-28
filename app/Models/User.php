@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -20,10 +21,8 @@ use Illuminate\Notifications\Notifiable;
  * @property Carbon|null $updated_at
  * @property int|null $total_achievement_points
  * @property int|null $current_level_id
- *
  * @property-read array $achievements
  * @property-read array $level
- * 
  */
 class User extends Authenticatable
 {
@@ -39,7 +38,7 @@ class User extends Authenticatable
         'email',
         'password',
         'total_achievement_points',
-        'current_level_id'
+        'current_level_id',
     ];
 
     /**
@@ -70,7 +69,7 @@ class User extends Authenticatable
         ];
     }
 
-    public function achievementsRelation()
+    public function achievementsRelation(): HasMany
     {
         return $this->hasMany(UserAchievement::class);
     }
@@ -79,26 +78,26 @@ class User extends Authenticatable
     {
         $points = (int) ($this->total_achievement_points ?? 0);
 
-        $current = Level::orderBy('min_points','desc')
-            ->where('min_points','<=',$points)
+        $current = Level::orderBy('min_points', 'desc')
+            ->where('min_points', '<=', $points)
             ->first();
 
-        $next = Level::where('min_points','>', $current?->min_points ?? -1)
+        $next = Level::where('min_points', '>', $current?->min_points ?? -1)
             ->orderBy('min_points')
             ->first();
 
         return [
-            'points'  => $points,
+            'points' => $points,
             'current' => $current ? [
                 'id' => $current->id,
                 'name' => $current->name,
                 'min_points' => (int) $current->min_points,
             ] : null,
-            'next'    => $next ? [
+            'next' => $next ? [
                 'id' => $next->id,
                 'name' => $next->name,
                 'min_points' => (int) $next->min_points,
-                'points_to_go' => max(0, (int)$next->min_points - $points),
+                'points_to_go' => max(0, (int) $next->min_points - $points),
             ] : null,
         ];
     }
@@ -107,7 +106,7 @@ class User extends Authenticatable
     public function getAchievementsAttribute(): array
     {
         $all = Achievement::with(['steps' => function ($q) {
-            $q->orderBy('threshold')->select('id','achievement_id','threshold');
+            $q->orderBy('threshold')->select('id', 'achievement_id', 'threshold');
         }])->orderBy('id')->get();
 
         $progress = UserAchievement::where('user_id', $this->id)
@@ -121,15 +120,18 @@ class User extends Authenticatable
             $step_points = $a->steps()->pluck('points', 'threshold')->all();
             $maxStep = empty($steps) ? null : max($steps);
 
-            $curr = (int)($ua?->progress ?? 0);
+            $curr = (int) ($ua?->progress ?? 0);
             $highest = $ua?->highest_step_unlocked;
             $unlockedAt = $ua?->first_unlocked_at?->toIso8601String();
 
             $nextStep = null;
             $remaining = null;
-            if ($a->progress_type === 'counter' && !empty($steps)) {
+            if ($a->progress_type === 'counter' && ! empty($steps)) {
                 foreach ($steps as $t) {
-                    if ($curr < $t) { $nextStep = $t; break; }
+                    if ($curr < $t) {
+                        $nextStep = $t;
+                        break;
+                    }
                 }
                 if ($nextStep !== null) {
                     $remaining = max(0, $nextStep - $curr);
@@ -148,14 +150,14 @@ class User extends Authenticatable
                 'name' => $a->name,
                 'description' => $a->description,
                 'type' => $a->progress_type,
-                'event_points' => (int)$a->event_points,
+                'event_points' => (int) $a->event_points,
                 'steps' => $step_points,
                 'progress' => [
                     'value' => $curr,
                     'highest_step' => $highest,
                     'next_step' => $nextStep,
                     'remaining' => $remaining,
-                    'completed' => (bool)$completed,
+                    'completed' => (bool) $completed,
                     'unlocked_at' => $unlockedAt,
                 ],
             ];

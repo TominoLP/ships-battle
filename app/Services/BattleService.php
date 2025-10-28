@@ -23,8 +23,7 @@ class BattleService
     public function __construct(
         private readonly PlacementService $placementService,
         private readonly int $boardSize = 12,
-    ) {
-    }
+    ) {}
 
     public function resolveShot(Player $attacker, Player $defender, int $x, int $y): array
     {
@@ -110,7 +109,7 @@ class BattleService
     public function resolveAbility(Player $attacker, Player $defender, string $type, array $payload): array
     {
         $type = strtolower($type);
-        if (!isset(self::ABILITY_LIMITS[$type])) {
+        if (! isset(self::ABILITY_LIMITS[$type])) {
             throw new \InvalidArgumentException('Unknown ability');
         }
 
@@ -201,7 +200,7 @@ class BattleService
             ];
         }
 
-        if (!$anyHit) {
+        if (! $anyHit) {
             $this->switchTurn($attacker, $defender);
         }
 
@@ -231,9 +230,9 @@ class BattleService
                 ->get(['x', 'y', 'result'])
                 ->map(static function (Move $move) {
                     return [
-                        'x' => (int)$move->x,
-                        'y' => (int)$move->y,
-                        'result' => (string)$move->result,
+                        'x' => (int) $move->x,
+                        'y' => (int) $move->y,
+                        'result' => (string) $move->result,
                     ];
                 })
                 ->values()
@@ -247,9 +246,9 @@ class BattleService
                     ->get(['x', 'y', 'result'])
                     ->map(static function (Move $move) {
                         return [
-                            'x' => (int)$move->x,
-                            'y' => (int)$move->y,
-                            'result' => (string)$move->result,
+                            'x' => (int) $move->x,
+                            'y' => (int) $move->y,
+                            'result' => (string) $move->result,
                         ];
                     })
                     ->values()
@@ -273,16 +272,16 @@ class BattleService
                 'id' => $player->id,
                 'name' => $player->name,
                 'board' => $player->board,
-                'isTurn' => (bool)$player->is_turn,
-                'isReady' => (bool)$player->is_ready,
+                'isTurn' => (bool) $player->is_turn,
+                'isReady' => (bool) $player->is_ready,
                 'abilityUsage' => $player->ability_usage,
                 'turnKills' => $player->turn_kills,
             ],
             'enemy' => $enemy ? [
                 'id' => $enemy->id,
                 'name' => $enemy->name,
-                'isTurn' => (bool)$enemy->is_turn,
-                'isReady' => (bool)$enemy->is_ready,
+                'isTurn' => (bool) $enemy->is_turn,
+                'isReady' => (bool) $enemy->is_ready,
             ] : null,
             'shots' => [
                 'player' => $playerShots,
@@ -400,6 +399,7 @@ class BattleService
                 return false;
             }
         }
+
         return true;
     }
 
@@ -420,27 +420,28 @@ class BattleService
     {
         if ($type === 'plane') {
             $axis = ($payload['axis'] ?? 'row') === 'col' ? 'col' : 'row';
-            $idx = max(0, min($this->boardSize - 1, (int)($payload['index'] ?? 0)));
+            $idx = max(0, min($this->boardSize - 1, (int) ($payload['index'] ?? 0)));
             if ($axis === 'row') {
                 return array_map(
-                    fn(int $x) => [$x, $idx],
+                    fn (int $x) => [$x, $idx],
                     range(0, $this->boardSize - 1)
                 );
             }
+
             return array_map(
-                fn(int $y) => [$idx, $y],
+                fn (int $y) => [$idx, $y],
                 range(0, $this->boardSize - 1)
             );
         }
 
         if ($type === 'comb') {
             $center = Arr::get($payload, 'center');
-            if (!is_array($center) || !isset($center['x'], $center['y'])) {
+            if (! is_array($center) || ! isset($center['x'], $center['y'])) {
                 throw new \InvalidArgumentException('Missing comb center');
             }
 
-            $cx = (int)$center['x'];
-            $cy = (int)$center['y'];
+            $cx = (int) $center['x'];
+            $cy = (int) $center['y'];
             $targets = [];
             for ($dy = -2; $dy <= 2; $dy++) {
                 for ($dx = -2; $dx <= 2; $dx++) {
@@ -454,6 +455,7 @@ class BattleService
                     }
                 }
             }
+
             return $targets;
         }
 

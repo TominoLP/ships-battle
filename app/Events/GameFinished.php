@@ -12,9 +12,7 @@ class GameFinished implements ShouldBroadcastNow
 {
     use SerializesModels;
 
-    public function __construct(public Game $game, public Player $winner)
-    {
-    }
+    public function __construct(public Game $game, public Player $winner) {}
 
     public function broadcastOn(): Channel
     {

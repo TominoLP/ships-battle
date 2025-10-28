@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Models\Game;
 use App\Models\Player;
 use App\Models\User;
-use App\Models\Game;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class PlayerFactory extends Factory

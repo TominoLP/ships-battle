@@ -40,20 +40,20 @@ class StatsController extends Controller
         }
 
         $entries = $baseQuery->limit(10)->get()->map(function ($row) {
-            $games = (int)$row->games;
-            $wins = (int)$row->wins;
+            $games = (int) $row->games;
+            $wins = (int) $row->wins;
 
             return [
                 'user_id' => $row->user_id,
                 'name' => $row->user?->name ?? 'Unbekannt',
-                'ships_destroyed' => (int)$row->ships_destroyed,
-                'ships_lost' => (int)$row->ships_lost,
+                'ships_destroyed' => (int) $row->ships_destroyed,
+                'ships_lost' => (int) $row->ships_lost,
                 'wins' => $wins,
                 'games' => $games,
                 'win_rate' => $games > 0 ? round(($wins / $games) * 100, 1) : 0.0,
-                'shots_fired' => (int)$row->shots_fired,
-                'hits' => (int)$row->hits,
-                'abilities_used' => (int)$row->abilities_used,
+                'shots_fired' => (int) $row->shots_fired,
+                'hits' => (int) $row->hits,
+                'abilities_used' => (int) $row->abilities_used,
             ];
         });
 

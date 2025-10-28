@@ -16,14 +16,14 @@ use Illuminate\Support\Carbon;
  * @property int $game_id
  * @property string $name
  * @property array $board
- * @property boolean $is_turn
- * @property boolean $is_ready
+ * @property bool $is_turn
+ * @property bool $is_ready
  * @property array $ships
  * @property array $ability_usage
  * @property int $turn_kills
- * @property boolean $wants_rematch
+ * @property bool $wants_rematch
  * @property int $user_id
- * 
+ *
  * @method static where(string $string, int $game_id)
  * @method static findOrFail(mixed $player_id)
  * @method static create(array $array)
@@ -32,9 +32,8 @@ use Illuminate\Support\Carbon;
  */
 class Player extends Model
 {
-
     use HasFactory;
-    
+
     protected $fillable = [
         'user_id',
         'game_id',
@@ -102,6 +101,7 @@ class Player extends Model
 
         if (is_string($value)) {
             $decoded = json_decode($value, true) ?: [];
+
             return array_merge(self::defaultAbilityUsage(), $decoded);
         }
 
@@ -121,11 +121,13 @@ class Player extends Model
     public function getHitsAttribute(): int
     {
         $enemy = $this->enemy();
-        if (!$enemy) return 0;
+        if (! $enemy) {
+            return 0;
+        }
 
         return collect($enemy->board)
             ->flatten()
-            ->filter(fn($cell) => $cell === 2 || $cell === 3)
+            ->filter(fn ($cell) => $cell === 2 || $cell === 3)
             ->count();
     }
 
@@ -139,11 +141,13 @@ class Player extends Model
     public function getSunkShipsAttribute(): int
     {
         $enemy = $this->enemy();
-        if (!$enemy) return 0;
+        if (! $enemy) {
+            return 0;
+        }
 
         return collect($enemy->board)
             ->flatten()
-            ->filter(fn($cell) => $cell === 4)
+            ->filter(fn ($cell) => $cell === 4)
             ->count();
     }
 }

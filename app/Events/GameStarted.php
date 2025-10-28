@@ -12,9 +12,7 @@ class GameStarted implements ShouldBroadcastNow
 {
     use SerializesModels;
 
-    public function __construct(public Game $game, public Player $current)
-    {
-    }
+    public function __construct(public Game $game, public Player $current) {}
 
     public function broadcastOn(): Channel
     {
@@ -31,7 +29,7 @@ class GameStarted implements ShouldBroadcastNow
         return [
             'game' => $this->game->only(['id', 'code', 'status', 'created_at', 'updated_at']),
             'current' => ['id' => $this->current->id, 'name' => $this->current->name],
-            'players' => $this->game->players()->get()->map(fn($p) => ['id' => $p->id, 'name' => $p->name])->toArray(),
+            'players' => $this->game->players()->get()->map(fn ($p) => ['id' => $p->id, 'name' => $p->name])->toArray(),
         ];
     }
 }

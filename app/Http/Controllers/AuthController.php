@@ -13,7 +13,7 @@ class AuthController extends Controller
     public function register(Request $request): JsonResponse
     {
         $name = trim($request->string('name')->toString());
-        $password = (string)$request->input('password', '');
+        $password = (string) $request->input('password', '');
 
         if ($name === '') {
             return response()->json([
@@ -62,7 +62,7 @@ class AuthController extends Controller
     public function login(Request $request): JsonResponse
     {
         $name = trim($request->string('name')->toString());
-        $password = (string)$request->input('password', '');
+        $password = (string) $request->input('password', '');
 
         if ($name === '' || $password === '') {
             return response()->json([
@@ -70,7 +70,7 @@ class AuthController extends Controller
             ], 422);
         }
 
-        if (!Auth::attempt(['name' => $name, 'password' => $password], $request->boolean('remember'))) {
+        if (! Auth::attempt(['name' => $name, 'password' => $password], $request->boolean('remember'))) {
             return response()->json([
                 'message' => 'Name oder Passwort ist falsch.',
             ], 422);
@@ -106,12 +106,12 @@ class AuthController extends Controller
     private function placeholderEmail(string $name): string
     {
         $slug = Str::slug($name) ?: 'player';
-        $base = $slug . '@players.local';
+        $base = $slug.'@players.local';
         $email = $base;
         $suffix = 1;
 
         while (User::where('email', $email)->exists()) {
-            $email = $slug . '+' . $suffix . '@players.local';
+            $email = $slug.'+'.$suffix.'@players.local';
             $suffix++;
         }
 

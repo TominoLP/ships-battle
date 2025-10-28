@@ -13,12 +13,10 @@ class ShotFired implements ShouldBroadcastNow
 
     public function __construct(
         public Player $player,
-        public int    $x,
-        public int    $y,
+        public int $x,
+        public int $y,
         public string $result
-    )
-    {
-    }
+    ) {}
 
     public function broadcastOn(): Channel
     {

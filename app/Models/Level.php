@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * App\Models\Level
+ *
  * @property int $id
  * @property int $min_points
  * @property string $name
@@ -21,9 +22,10 @@ use Illuminate\Database\Eloquent\Model;
 class Level extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'min_points',
         'name',
-        'sort_index'
+        'sort_index',
     ];
 }

@@ -21,13 +21,11 @@ use InvalidArgumentException;
 
 class GameController extends Controller
 {
-    
     public function __construct(
         private readonly PlacementService $placementService,
         private readonly BattleService $battleService,
         private readonly AchievementService $achievements
-    ) {
-    }
+    ) {}
 
     public function join(Request $request): JsonResponse
     {
@@ -37,7 +35,7 @@ class GameController extends Controller
 
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json(['error' => 'Authentication required'], 401);
         }
 
@@ -46,13 +44,13 @@ class GameController extends Controller
             ->where('status', '!=', Game::STATUS_COMPLETED)
             ->first();
 
-        if (!$game) {
+        if (! $game) {
             return response()->json(['error' => 'Game not found or already completed'], 404);
         }
-        
-        $name = trim((string)($user->name ?? ''));
+
+        $name = trim((string) ($user->name ?? ''));
         if ($name === '') {
-            $name = 'Player ' . $user->id;
+            $name = 'Player '.$user->id;
         }
 
         $existing = $game->players()
@@ -99,16 +97,16 @@ class GameController extends Controller
 
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             return response()->json(['error' => 'Authentication required'], 401);
         }
 
-        $name = trim((string)($user->name ?? ''));
+        $name = trim((string) ($user->name ?? ''));
         if ($name === '') {
-            $name = 'Player ' . $user->id;
+            $name = 'Player '.$user->id;
         }
 
-        $game = new Game();
+        $game = new Game;
         $game->public = $request->boolean('public', false);
         $game->save();
         $player = Player::create([
@@ -146,15 +144,15 @@ class GameController extends Controller
         $player = Player::findOrFail($request->player_id);
 
         $userId = $request->user()?->id;
-        if (!$userId || $player->user_id !== $userId) {
+        if (! $userId || $player->user_id !== $userId) {
             return response()->json(['error' => 'Forbidden'], 403);
         }
 
-        $ships = collect($request->ships)->map(fn($s) => [
-            'x' => (int)$s['x'],
-            'y' => (int)$s['y'],
-            'size' => (int)$s['size'],
-            'dir' => (string)$s['dir'],
+        $ships = collect($request->ships)->map(fn ($s) => [
+            'x' => (int) $s['x'],
+            'y' => (int) $s['y'],
+            'size' => (int) $s['size'],
+            'dir' => (string) $s['dir'],
         ]);
 
         try {
@@ -200,7 +198,7 @@ class GameController extends Controller
         ]);
 
         $userId = $request->user()?->id;
-        if (!$userId) {
+        if (! $userId) {
             return response()->json(['error' => 'Authentication required'], 401);
         }
 
@@ -218,16 +216,16 @@ class GameController extends Controller
                 ->lockForUpdate()
                 ->first();
 
-            if (!$enemy) {
+            if (! $enemy) {
                 return response()->json(['error' => 'No enemy yet'], 400);
             }
 
-            if (!$player->is_turn) {
+            if (! $player->is_turn) {
                 return response()->json(['error' => 'Not your turn'], 409);
             }
 
-            $x = (int)$request->x;
-            $y = (int)$request->y;
+            $x = (int) $request->x;
+            $y = (int) $request->y;
 
             return $this->battleService->resolveShot($player, $enemy, $x, $y);
         });
@@ -255,7 +253,7 @@ class GameController extends Controller
         ]);
 
         $userId = $request->user()?->id;
-        if (!$userId) {
+        if (! $userId) {
             return response()->json(['error' => 'Authentication required'], 401);
         }
 
@@ -273,10 +271,10 @@ class GameController extends Controller
                 ->lockForUpdate()
                 ->first();
 
-            if (!$enemy) {
+            if (! $enemy) {
                 return response()->json(['error' => 'No enemy yet'], 400);
             }
-            if (!$player->is_turn) {
+            if (! $player->is_turn) {
                 return response()->json(['error' => 'Not your turn'], 409);
             }
 
@@ -315,7 +313,7 @@ class GameController extends Controller
         ]);
 
         $userId = $request->user()?->id;
-        if (!$userId) {
+        if (! $userId) {
             return response()->json(['error' => 'Authentication required'], 401);
         }
 
@@ -329,7 +327,7 @@ class GameController extends Controller
 
             /** @var Game|null $game */
             $game = Game::lockForUpdate()->find($player->game_id);
-            if (!$game) {
+            if (! $game) {
                 return response()->json(['error' => 'Game not found'], 404);
             }
 
@@ -337,7 +335,7 @@ class GameController extends Controller
                 return response()->json(['error' => 'Game still in progress'], 409);
             }
 
-            if (!$player->wants_rematch) {
+            if (! $player->wants_rematch) {
                 $player->update(['wants_rematch' => true]);
             }
 
@@ -347,14 +345,14 @@ class GameController extends Controller
                 ->lockForUpdate()
                 ->first();
 
-            if (!$enemy) {
+            if (! $enemy) {
                 return [
                     'status' => 'waiting',
                     'message' => 'Waiting for an opponent',
                 ];
             }
 
-            if (!$enemy->wants_rematch) {
+            if (! $enemy->wants_rematch) {
                 return [
                     'status' => 'waiting',
                     'message' => 'Waiting for opponent to accept rematch',
@@ -371,12 +369,13 @@ class GameController extends Controller
                     if ($b->id === $game->winner_player_id && $a->id !== $game->winner_player_id) {
                         return 1;
                     }
+
                     return $a->id <=> $b->id;
                 });
             } else {
-                usort($players, static fn(Player $a, Player $b): int => $a->id <=> $b->id);
+                usort($players, static fn (Player $a, Player $b): int => $a->id <=> $b->id);
             }
-            
+
             $newGame = Game::create();
             $newGame->update(['status' => Game::STATUS_CREATING]);
 
@@ -397,11 +396,11 @@ class GameController extends Controller
                     'new_player_id' => $newPlayer->id,
                     'name' => $newPlayer->name,
                     'user_id' => $newPlayer->user_id,
-                    'is_turn' => (bool)$newPlayer->is_turn,
+                    'is_turn' => (bool) $newPlayer->is_turn,
                 ];
             }
 
-            if (!empty($newPlayers)) {
+            if (! empty($newPlayers)) {
                 $starter = $newPlayers[0];
                 foreach ($newPlayers as $candidate) {
                     $candidate->forceFill([
@@ -412,6 +411,7 @@ class GameController extends Controller
                 }
                 $mapping = array_map(static function (array $row) use ($starter) {
                     $row['is_turn'] = $row['new_player_id'] === $starter->id;
+
                     return $row;
                 }, $mapping);
             }
@@ -454,7 +454,7 @@ class GameController extends Controller
         if ($request->filled('player_id')) {
             $player = Player::find($request->integer('player_id'));
             if ($player) {
-                if (!$userId || $player->user_id !== $userId) {
+                if (! $userId || $player->user_id !== $userId) {
                     return response()->json(['error' => 'Forbidden'], 403);
                 }
 
@@ -468,6 +468,7 @@ class GameController extends Controller
 
         return response()->json($result);
     }
+
     public function getAvailableGames(Request $request): JsonResponse
     {
         $games = Game::query()
@@ -493,30 +494,30 @@ class GameController extends Controller
     {
         $userId = $request->user()?->id;
 
-        if (!$userId || $player->user_id !== $userId) {
+        if (! $userId || $player->user_id !== $userId) {
             return response()->json(['error' => 'Forbidden'], 403);
         }
 
         return response()->json($this->battleService->resolveState($player));
     }
-    
+
     public function leaveGame(Request $request, Player $player): JsonResponse
     {
         $userId = $request->user()?->id;
 
-        if (!$userId || $player->user_id !== $userId) {
+        if (! $userId || $player->user_id !== $userId) {
             return response()->json(['error' => 'Forbidden'], 403);
         }
 
         $game = $player->game;
 
-        if (!$game) {
+        if (! $game) {
             return response()->json(['error' => 'Game not found'], 404);
         }
 
         $gameId = $game->id;
         $gameCode = $game->code;
-        $wasPublic = (bool)$game->public;
+        $wasPublic = (bool) $game->public;
         $opponentCount = $game->players()
             ->where('players.id', '!=', $player->id)
             ->count();
@@ -540,7 +541,7 @@ class GameController extends Controller
         }
 
         return response()->json(['message' => 'Left the game']);
-        
+
     }
 
     /**
@@ -570,7 +571,9 @@ class GameController extends Controller
     protected function awardFromAbility(Player $actor, array $payload): void
     {
         $actor->loadMissing('user');
-        if (!$actor->user) return;
+        if (! $actor->user) {
+            return;
+        }
 
         // Count ability usage
         $this->achievements->increment($actor->user, 'abilities_used', 1);
@@ -589,7 +592,7 @@ class GameController extends Controller
             ?? ($payload['stats']['revealed_first_turn'] ?? null);
 
         if (is_numeric($revealedFirstTurn)) {
-            $r = (int)$revealedFirstTurn;
+            $r = (int) $revealedFirstTurn;
             if ($r >= 8) {
                 $this->achievements->unlockEvent($actor->user, 'first_turn_scout_8');
             } elseif ($r >= 6) {
@@ -601,7 +604,7 @@ class GameController extends Controller
     protected function awardCombatProgress(Player $actor, array $payload): void
     {
         $actor->loadMissing('user');
-        if (!$actor->user) {
+        if (! $actor->user) {
             return;
         }
 
@@ -615,7 +618,7 @@ class GameController extends Controller
             ?? ($payload['player']['turnKills'] ?? null);
 
         if (is_numeric($turnKills)) {
-            $kills = (int)$turnKills;
+            $kills = (int) $turnKills;
             if ($kills >= 5) {
                 $this->achievements->unlockEvent($actor->user, 'multi_kill_5_in_turn');
             } elseif ($kills >= 3) {
@@ -623,7 +626,7 @@ class GameController extends Controller
             }
         }
 
-        $gameOver = (bool)($payload['gameOver'] ?? false);
+        $gameOver = (bool) ($payload['gameOver'] ?? false);
         $winnerId = $payload['winner']['id']
             ?? $payload['winner_player_id']
             ?? $payload['winner_id']
@@ -636,5 +639,4 @@ class GameController extends Controller
             }
         }
     }
-
 }

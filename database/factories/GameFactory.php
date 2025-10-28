@@ -16,8 +16,8 @@ class GameFactory extends Factory
      *
      * @return array<string, mixed>
      */
-
     protected $model = Game::class;
+
     public function definition(): array
     {
         return [
@@ -34,5 +34,4 @@ class GameFactory extends Factory
 
         return $code;
     }
-
 }

@@ -10,9 +10,7 @@ class PublicGameUnavailable implements ShouldBroadcastNow
 {
     use SerializesModels;
 
-    public function __construct(public int $gameId)
-    {
-    }
+    public function __construct(public int $gameId) {}
 
     public function broadcastOn(): Channel
     {

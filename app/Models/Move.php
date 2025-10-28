@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
  * @property int $x
  * @property int $y
  * @property string $result
+ *
  * @method static where(string $string, string $code)
  * @method static create(array $array)
  */

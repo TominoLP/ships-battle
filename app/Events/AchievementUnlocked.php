@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Events;
 
 use App\Models\Achievement;
@@ -19,9 +18,7 @@ class AchievementUnlocked implements ShouldBroadcastNow
         public ?int $stepThreshold,
         public int $pointsAwarded,
         public int $totalPointsAfter
-    )
-    {
-    }
+    ) {}
 
     public function broadcastOn(): Channel
     {

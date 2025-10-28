@@ -18,7 +18,8 @@ use Illuminate\Support\Str;
  * @property string $code
  * @property string $status
  * @property int|null $winner_player_id
- * @property boolean $public
+ * @property bool $public
+ *
  * @method static where(string $string, string $code)
  * @method static create()
  * @method static lockForUpdate()
@@ -26,9 +27,13 @@ use Illuminate\Support\Str;
 class Game extends Model
 {
     use HasFactory;
+
     const STATUS_WAITING = 'waiting';
+
     const STATUS_CREATING = 'creating';
+
     const STATUS_IN_PROGRESS = 'in_progress';
+
     const STATUS_COMPLETED = 'completed';
 
     protected $casts = [
@@ -36,6 +41,7 @@ class Game extends Model
         'updated_at' => 'datetime',
         'public' => 'boolean',
     ];
+
     protected $fillable = [
         'code',
         'status',
@@ -59,11 +65,11 @@ class Game extends Model
 
     private static function generateUniqueCode(): string
     {
-        static $badWords = ['ass', 'sex', 'fuk', 'pis', 'cum', 'dck', 'cnt', 'tit', 'gay', 'wtf', 'fag',];
+        static $badWords = ['ass', 'sex', 'fuk', 'pis', 'cum', 'dck', 'cnt', 'tit', 'gay', 'wtf', 'fag'];
 
         do {
             $code = Str::upper(Str::random(6));
-            $containsBadWord = collect($badWords)->contains(fn($word) => str_contains(Str::lower($code), $word)
+            $containsBadWord = collect($badWords)->contains(fn ($word) => str_contains(Str::lower($code), $word)
             );
 
         } while ($containsBadWord || self::where('code', $code)->exists());
@@ -80,6 +86,4 @@ class Game extends Model
     {
         return $this->belongsTo(Player::class, 'winner_id');
     }
-
-
 }

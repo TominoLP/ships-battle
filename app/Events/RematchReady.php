@@ -12,14 +12,13 @@ class RematchReady implements ShouldBroadcastNow
     use SerializesModels;
 
     /**
-     * @param array<int, array{old_player_id:int,new_player_id:int,name:string,user_id:int|null,is_turn:bool}> $players
+     * @param  array<int, array{old_player_id:int,new_player_id:int,name:string,user_id:int|null,is_turn:bool}>  $players
      */
     public function __construct(
         public Game $previousGame,
         public Game $nextGame,
         public array $players
-    ) {
-    }
+    ) {}
 
     public function broadcastOn(): Channel
     {
@@ -46,4 +45,3 @@ class RematchReady implements ShouldBroadcastNow
         ];
     }
 }
-

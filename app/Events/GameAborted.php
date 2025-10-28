@@ -10,9 +10,7 @@ class GameAborted implements ShouldBroadcastNow
 {
     use SerializesModels;
 
-    public function __construct(public int $gameId, public string $code, public string $reason = 'opponent_left')
-    {
-    }
+    public function __construct(public int $gameId, public string $code, public string $reason = 'opponent_left') {}
 
     public function broadcastOn(): Channel
     {
