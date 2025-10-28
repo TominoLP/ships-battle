@@ -401,6 +401,7 @@ export function useGameState() {
     gameId.value = null;
     playerId.value = null;
     clearSession();
+    await refreshAvailableGames();
   }
 
   function applyRematch(nextGame: { id: number; code: string }, mapping: RematchMapping) {

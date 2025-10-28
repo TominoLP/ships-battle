@@ -141,11 +141,13 @@ function closePopup() {
 }
 
 function handleGameOverClose() {
+  auth.refresh()
   gs.resetForNewGame();
   resetPlacementState();
 }
 
 function handleRematchRequest() {
+  auth.refresh()
   void gs.requestRematch();
 }
 
@@ -154,6 +156,7 @@ function handleCreateGame(options?: { public?: boolean }) {
 }
 
 function handleLeaveGame() {
+  auth.refresh()
   gs.leaveGame();
   resetPlacementState();
 }
