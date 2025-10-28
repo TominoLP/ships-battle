@@ -118,6 +118,7 @@ class User extends Authenticatable
             $ua = $progress->get($a->id);
 
             $steps = $a->steps->pluck('threshold')->all();
+            $step_points = $a->steps()->pluck('points', 'threshold')->all();
             $maxStep = empty($steps) ? null : max($steps);
 
             $curr = (int)($ua?->progress ?? 0);
@@ -147,7 +148,8 @@ class User extends Authenticatable
                 'name' => $a->name,
                 'description' => $a->description,
                 'type' => $a->progress_type,
-                'steps' => $steps,
+                'event_points' => (int)$a->event_points,
+                'steps' => $step_points,
                 'progress' => [
                     'value' => $curr,
                     'highest_step' => $highest,

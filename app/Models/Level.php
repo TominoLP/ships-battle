@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Model;
  * @method static updateOrCreate(array $array, array $array1)
  * @method static where(string $string, string $string1, int $param)
  * @method static find(int|null $current_level_id)
+ * @method static firstOrCreate(int[] $array, string[] $array1)
  */
 class Level extends Model
 {
