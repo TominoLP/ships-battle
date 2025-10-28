@@ -492,13 +492,13 @@ export function useGameState() {
       const resp: Response | undefined = e?.response;
       if (resp) {
         try {
-          const json = await resp.clone().json();
-          message = (json?.error as string) ?? message;
-        } catch (_) {
+          const json = await resp.clone().json()
+          message = (json?.error as string) ?? message
+        } catch {
           try {
-            message = await resp.clone().text();
-          } catch (_) {
-            message = e?.message ?? message;
+            message = await resp.clone().text()
+          } catch {
+            message = e?.message ?? message
           }
         }
       } else if (e?.message) {
@@ -659,13 +659,13 @@ export function useGameState() {
       if (resp) {
         let message: string | null = null;
         try {
-          const json = await resp.clone().json();
-          message = json?.error ?? null;
-        } catch (_) {
+          const json = await resp.clone().json() as { error?: string }
+          message = json?.error ?? null
+        } catch {
           try {
-            message = await resp.clone().text();
-          } catch (_) {
-            message = null;
+            message = await resp.clone().text()
+          } catch {
+            message = null
           }
         }
         pushMsg(message || (resp.status === 409 ? 'Not your turn' : 'Shot failed'));
@@ -744,13 +744,13 @@ export function useGameState() {
       if (resp) {
         let message: string | null = null;
         try {
-          const json = await resp.clone().json();
-          message = json?.error ?? null;
-        } catch (_) {
+          const json = await resp.clone().json() as { error?: string }
+          message = json?.error ?? null
+        } catch {
           try {
-            message = await resp.clone().text();
-          } catch (_) {
-            message = null;
+            message = await resp.clone().text()
+          } catch {
+            message = null
           }
         }
         if (message) {

@@ -105,16 +105,6 @@ const formattedTime = computed(() => {
   return `${minutes}:${seconds}`;
 });
 
-const turnLabel = computed(() => {
-  if (props.gameOver) {
-    return 'Spiel beendet';
-  }
-  if (props.step !== 'playing') {
-    return 'Spielvorbereitung';
-  }
-  return props.myTurn ? 'Du bist am Zug' : `${props.enemyName || 'Gegner'} ist dran`;
-});
-
 function formatAccuracy(value: number | null): string {
   if (value === null) return '–';
   return `${value.toFixed(1)} %`;

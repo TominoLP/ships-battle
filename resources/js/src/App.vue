@@ -376,7 +376,7 @@ const boardDisabled = computed(() =>
   gs.gameOver || (!abilities.ghostActive.value && !gs.myTurn)
 );
 
-function startAbilityFromPanel(type: 'plane' | 'comb' | 'splatter', ev: PointerEvent) {
+function startAbilityFromPanel(type: 'plane' | 'comb' | 'splatter') {
   abilities.startGhost(type);
   document.body.style.userSelect = 'none';
 
@@ -394,7 +394,6 @@ function onAbilityMouseMove(ev: MouseEvent) {
   } else {
     const w = el.offsetWidth || 0;
     const h = el.offsetHeight || 0;
-    const c = window.matchMedia?.('(min-width: 640px)').matches ? 36 : 32;
     el.style.left = `${ev.clientX - w / 2}px`;
     el.style.top = `${ev.clientY - h / 2}px`;
   }
@@ -565,7 +564,6 @@ async function onEnemyCellClick(x: number, y: number) {
             <div class="rounded-xl border border-slate-700 bg-slate-900/80 p-6 shadow-xl">
               <CreatePanel
                 v-model:gameCode="gs.gameCode"
-                :userName="accountName"
                 @create="handleCreateGame"
                 @join="gs.joinGame"
               />
@@ -573,10 +571,9 @@ async function onEnemyCellClick(x: number, y: number) {
             <LeaderboardPanel :userName="accountName"/>
             <div v-if="gs.gamesAvailable.length != 0" class="rounded-xl border border-slate-700 bg-slate-900/80 p-6 shadow-xl">
               <h2 class="mb-4 text-lg font-semibold text-slate-200">Verfügbare Spiele</h2>
-              <div v-for="game in gs.gamesAvailable">
+              <div v-for="game in gs.gamesAvailable" :key="game.code">
                 <div
                   class="mb-3 flex items-center justify-between rounded-lg border border-slate-600 bg-slate-800/70 px-4 py-3"
-                  :key="game.code"
                 >
                   <div>
                     <span class="font-mono font-semibold text-slate-200">{{ game.code }}</span>

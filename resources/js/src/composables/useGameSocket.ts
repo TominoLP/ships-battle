@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Ref } from 'vue';
 import { onBeforeUnmount, ref } from 'vue';
 import Echo from 'laravel-echo';
@@ -133,7 +132,7 @@ function createChannel(name: string, messages: Ref<string[]>): { echo: Echo<'pus
   }
 
   const channel = echo.channel(name);
-  // @ts-ignore
+  // @ts-expect-error "echo" channel type mismatch (fix for IDEs)
   return { echo, channel };
 }
 

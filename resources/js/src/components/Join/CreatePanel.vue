@@ -1,10 +1,6 @@
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue';
 
-const props = defineProps<{
-  userName: string;
-}>();
-
 const gameCode = defineModel<string>('gameCode', { required: true });
 
 const showMode = ref<'none' | 'create' | 'join'>(gameCode.value ? 'join' : 'none');
