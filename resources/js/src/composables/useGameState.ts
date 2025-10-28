@@ -1,5 +1,5 @@
 import { ref, unref, watch } from 'vue';
-import GameController from '@/actions/App/Http/Controllers/GameController';
+import GameController, { getAvailableGames } from '@/actions/App/Http/Controllers/GameController';
 import { api } from '@/src/composables/useApi';
 import type { PlacedShip, Step } from '@/src/types';
 import { useGameSocket, usePublicGameStream } from '@/src/composables/useGameSocket';
@@ -373,7 +373,7 @@ export function useGameState() {
     }
   }
 
-  function resetForNewGame() {
+  async function resetForNewGame() {
     if (socket.value) {
       try {
         socket.value.leave?.();
