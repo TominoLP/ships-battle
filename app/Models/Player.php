@@ -23,7 +23,8 @@ use Illuminate\Support\Carbon;
  * @property int $turn_kills
  * @property bool $wants_rematch
  * @property int $user_id
- *
+ * @property-read Game $game
+ * 
  * @method static where(string $string, int $game_id)
  * @method static findOrFail(mixed $player_id)
  * @method static create(array $array)

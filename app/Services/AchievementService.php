@@ -14,7 +14,7 @@ class AchievementService
 {
     public function increment(User $user, string $achievementKey, int $by = 1): UserAchievement
     {
-        return DB::transaction(function () use ($user, $achievementKey, $by) {
+        return DB::transaction(function () use ($achievementKey, $user, $by) {
             $achievement = Achievement::where('key', $achievementKey)->firstOrFail();
 
             $userAchievement = UserAchievement::firstOrCreate([
@@ -52,7 +52,7 @@ class AchievementService
 
     public function unlockEvent(User $user, string $achievementKey): UserAchievement
     {
-        return DB::transaction(function () use ($user, $achievementKey) {
+        return DB::transaction(function () use ($achievementKey, $user) {
             $achievement = Achievement::where('key', $achievementKey)->firstOrFail();
             $userAchievement = UserAchievement::firstOrCreate([
                 'user_id' => $user->id,
