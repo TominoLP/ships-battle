@@ -340,50 +340,6 @@ state.head = (args: { player: number | { id: number } } | [player: number | { id
 })
 
 /**
-* @see \App\Http\Controllers\GameController::getAvailableGames
-* @see app/Http/Controllers/GameController.php:518
-* @route '/api/game/available'
-*/
-export const getAvailableGames = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: getAvailableGames.url(options),
-    method: 'get',
-})
-
-getAvailableGames.definition = {
-    methods: ["get","head"],
-    url: '/api/game/available',
-} satisfies RouteDefinition<["get","head"]>
-
-/**
-* @see \App\Http\Controllers\GameController::getAvailableGames
-* @see app/Http/Controllers/GameController.php:518
-* @route '/api/game/available'
-*/
-getAvailableGames.url = (options?: RouteQueryOptions) => {
-    return getAvailableGames.definition.url + queryParams(options)
-}
-
-/**
-* @see \App\Http\Controllers\GameController::getAvailableGames
-* @see app/Http/Controllers/GameController.php:518
-* @route '/api/game/available'
-*/
-getAvailableGames.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
-    url: getAvailableGames.url(options),
-    method: 'get',
-})
-
-/**
-* @see \App\Http\Controllers\GameController::getAvailableGames
-* @see app/Http/Controllers/GameController.php:518
-* @route '/api/game/available'
-*/
-getAvailableGames.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
-    url: getAvailableGames.url(options),
-    method: 'head',
-})
-
-/**
 * @see \App\Http\Controllers\GameController::leaveGame
 * @see app/Http/Controllers/GameController.php:550
 * @route '/api/game/leave/{player}'
@@ -441,6 +397,50 @@ leaveGame.post = (args: { player: number | { id: number } } | [player: number | 
     method: 'post',
 })
 
-const GameController = { create, createBot, join, shoot, placeShips, useAbility, randomPlacement, rematch, state, getAvailableGames, leaveGame }
+/**
+* @see \App\Http\Controllers\GameController::getAvailableGames
+* @see app/Http/Controllers/GameController.php:518
+* @route '/api/game/available'
+*/
+export const getAvailableGames = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: getAvailableGames.url(options),
+    method: 'get',
+})
+
+getAvailableGames.definition = {
+    methods: ["get","head"],
+    url: '/api/game/available',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\GameController::getAvailableGames
+* @see app/Http/Controllers/GameController.php:518
+* @route '/api/game/available'
+*/
+getAvailableGames.url = (options?: RouteQueryOptions) => {
+    return getAvailableGames.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\GameController::getAvailableGames
+* @see app/Http/Controllers/GameController.php:518
+* @route '/api/game/available'
+*/
+getAvailableGames.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: getAvailableGames.url(options),
+    method: 'get',
+})
+
+/**
+* @see \App\Http\Controllers\GameController::getAvailableGames
+* @see app/Http/Controllers/GameController.php:518
+* @route '/api/game/available'
+*/
+getAvailableGames.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: getAvailableGames.url(options),
+    method: 'head',
+})
+
+const GameController = { create, createBot, join, shoot, placeShips, useAbility, randomPlacement, rematch, state, leaveGame, getAvailableGames }
 
 export default GameController
