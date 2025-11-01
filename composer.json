@@ -3,7 +3,7 @@
   "name": "tweio/ships-battle",
   "type": "project",
   "description": "a battleships game",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "keywords": [
     "laravel",
     "framework"

@@ -1,5 +1,15 @@
 # Ships App – Development & Deployment Guide
 
+Battleship-style Minigame — a feature-rich web game with multiple game modes, achievements, a level system, and unlockable abilities. The project is fully containerized with Docker, using Laravel for a fast, clean backend API and Vue.js for a reactive SPA frontend.
+
+## Highlights
+
+- Multiple game modes (e.g., Classic, Timed, Hardcore)
+- Achievements & levels for long-term progression
+- Tactical abilities to deepen gameplay
+- Clean Laravel API, Vue.js SPA
+- Docker-ready for smooth local dev and production deployment
+
 ## Requirements
 
 Before you begin, make sure you have the following installed:
