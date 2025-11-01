@@ -74,7 +74,7 @@ export function useGameState() {
     if (Array.isArray(payload.actions)) {
       payload.actions.forEach((action) => {
         if (action.type === 'ability' && action.ability) {
-          const actor = enemyName.value || 'Fleet AI';
+          const actor = enemyName.value || 'Unknown';
           pushMsg(`${actor} nutzt Fähigkeit ${action.ability}`);
         }
       });

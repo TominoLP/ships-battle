@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class BotMatchService
 {
-    private const BOT_NAME = 'Fleet AI';
+    private const BOT_NAME = '';
     private const BOARD_SIZE = 12;
 
     public function __construct(
@@ -46,7 +46,7 @@ class BotMatchService
             $bot = Player::create([
                 'user_id' => null,
                 'game_id' => $game->id,
-                'name' => self::BOT_NAME,
+                'name' => self::genBotName(),
                 'is_turn' => false,
                 'is_ready' => true,
                 'board' => $botFleet['board'],
@@ -64,6 +64,13 @@ class BotMatchService
                 'bot' => $bot->fresh(),
             ];
         });
+    }
+    
+    private static function genBotName(): string
+    {
+        $nouns = ['Eagle', 'Tiger', 'Shark', 'Wolf', 'Falcon', 'Panther', 'Dragon', 'Hawk'];
+        $noun = $nouns[array_rand($nouns)];
+        return 'Trainer ' . $noun;
     }
 
     /**

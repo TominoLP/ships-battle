@@ -40,7 +40,7 @@ const panels: Array<{
   {
     key: 'create-private',
     title: 'Privates Match',
-    description: 'Starte ein Spiel und teile den Code exklusiv mit deinem Mitspieler.',
+    description: 'Starte ein Spiel und teile den Code mit deinem Mitspieler.',
     icon: 'fa-solid fa-sailboat',
     accent: 'from-emerald-500/20 to-emerald-500/5 border-emerald-500/40 hover:border-emerald-400',
     action: () => {
@@ -50,7 +50,7 @@ const panels: Array<{
   {
     key: 'create-public',
     title: 'Öffentliches Match',
-    description: 'Veröffentliche dein Spiel in der Lobby – andere Spieler können sofort beitreten.',
+    description: 'Erstelle ein öffentliches Spiel, dem jeder in der Lobby beitreten kann.',
     icon: 'fa-solid fa-bullhorn',
     accent: 'from-amber-500/20 to-amber-500/5 border-amber-500/40 hover:border-amber-400',
     action: () => {
@@ -69,7 +69,7 @@ const panels: Array<{
   },
   {
     key: 'bot',
-    title: 'Gegen KI spielen',
+    title: 'Gegen Bot spielen',
     description: 'Trainiere deine Flottenstrategie gegen unseren Bot. Perfekt zum Aufwärmen.',
     icon: 'fa-solid fa-robot',
     accent: 'from-indigo-500/20 to-indigo-500/5 border-indigo-500/40 hover:border-indigo-400',
