@@ -3,12 +3,13 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\StatsController;
+use App\Http\Middleware\SetLocaleFromRequest;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'app');
 Route::view('/game', 'app');
 
-Route::prefix('api')->group(function () {
+Route::prefix('api')->middleware([SetLocaleFromRequest::class])->group(function () {
     Route::prefix('auth')->group(function () {
         Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:register');
         Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
