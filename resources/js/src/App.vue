@@ -85,6 +85,11 @@ watch(() => gs.gameId, (current, previous) => {
   }
 });
 
+const refreshForLangChange = () => {
+	gs.refreshAvailableGames()
+	auth.refresh()
+};
+
 // Abilities composable
 const abilities = useAbilities(12);
 
@@ -596,7 +601,7 @@ async function onEnemyCellClick(x: number, y: number) {
                 </div>
 
                 <!-- Locale switcher -->
-                <LocaleSwitch class="ml-3" />
+                <LocaleSwitch class="ml-3" @refresh="refreshForLangChange()" />
 
                 <a
                   href="https://github.com/TominoLP/ships-battle"

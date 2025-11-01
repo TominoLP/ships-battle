@@ -11,7 +11,9 @@
     "ready": "Ready",
     "placeRandom": "Place randomly",
     "showMyBoard": "Show my board",
-    "hideMyBoard": "Hide my board"
+    "hideMyBoard": "Hide my board",
+    "startGame": "Start game",
+    "cancel": "Cancel"
   },
   "status": {
     "join": "Create a new game or join with a code.",
@@ -36,18 +38,63 @@
   },
   "join": {
     "availableGames": "Available games",
-    "createdBy": "Created by {name}"
+    "createdBy": "Created by {name}",
+    "cardTitle": "Enter code",
+    "cardDesc": "Already have a code? Enter it to jump right in.",
+    "title": "Redeem game code",
+    "instructions": "The code has 6 characters. We'll validate it automatically once it's complete.",
+    "codeLabel": "Game code",
+    "connecting": "Connecting…",
+    "joinGame": "Join game"
   },
   "placing": {
     "yourBoard": "Your board",
-    "placeAllShipsFirst": "Place all ships first."
+    "placeAllShipsFirst": "Place all ships first.",
+    "hint": "Drag the next ship onto the board. Blue = valid, Red = invalid. Press R to rotate.",
+    "remainingTotal": "remaining / total",
+    "allPlaced": "All placed",
+    "rotate": "Rotate",
+    "rotateTitle": "Rotate (R)",
+    "rotateShortcut": "(R)",
+    "orientation": { "horizontal": "Horizontal", "vertical": "Vertical" }
   },
   "playing": {
     "abilityHint": "Pick an ability and drag. (R rotates plane)",
-    "yourShips": "Your ships"
+    "yourShips": "Your ships",
+    "hintGhostActive": "Ghost active — click to apply.",
+    "hintClickToFire": "Click a cell to fire."
+  },
+  "create": {
+    "heading": "How do you want to start?",
+    "subheading": "Pick a scenario below or enter a game code if you've been invited.",
+    "createTitle": "Create game",
+    "private": {
+      "title": "Private game",
+      "blurb": "Only players with your code can join. Share it after creating the match.",
+      "cardTitle": "Private match",
+      "cardDesc": "Start a game and share the code with your opponent."
+    },
+    "public": {
+      "title": "Public game",
+      "blurb": "Your match will appear in the public lobby. Anyone can join without a code.",
+      "cardTitle": "Public match",
+      "cardDesc": "Create a public game that anyone in the lobby can join."
+    }
+  },
+  "bot": {
+    "cardTitle": "Play vs bot",
+    "cardDesc": "Practice your fleet strategy against our bot. Perfect for warming up."
   },
   "common": {
-    "ok": "OK"
+    "ok": "OK",
+    "select": "Select",
+    "backToSelection": "Back to selection",
+    "undo": "Undo",
+    "undoTitle": "Undo (Ctrl+Z)",
+    "undoShortcut": "(Ctrl+Z)",
+    "locked": "Locked",
+    "exhausted": "Exhausted",
+    "pleaseWait": "Please wait…"
   },
   "achievements": {
     "title": "Achievements"
@@ -56,5 +103,138 @@
     "label": "Language",
     "en": "English",
     "de": "German"
+  },
+  "lobby": {
+    "code": "Code",
+    "copied": "Code copied to clipboard!",
+    "copyHint": "Copy the code or the URL from the address bar and send it to your opponent!"
+  },
+  "gameOver": {
+    "won": "Victory",
+    "lost": "Defeat",
+    "winnerLabel": "Winner:",
+    "backToLobby": "Back to lobby",
+    "rematch": {
+      "start": "Start rematch",
+      "waiting": "Waiting for opponent…",
+      "ready": "Starting new round…",
+      "statusWaiting": "Once your opponent accepts, a new round will start automatically.",
+      "statusReady": "Rematch accepted — preparing the new game."
+    }
+  },
+  "stats": {
+    "title": "Statistics",
+    "playTime": "Play time",
+    "yourAttacks": "Your attacks",
+    "enemyAttacks": "Attacks from {name}",
+    "opponent": "Opponent",
+    "labels": {
+      "shotsFired": "Shots fired",
+      "hits": "Hits",
+      "accuracy": "Accuracy",
+      "shipsSunk": "Ships sunk",
+      "yourIntactCells": "Your intact cells"
+    }
+  },
+  "abilities": {
+    "plane": {
+      "name": "Plane",
+      "subtitle": "Full row/column",
+      "title": "Reveals a full row or column. Press R to rotate."
+    },
+    "bomb": {
+      "name": "Bomb",
+      "subtitleReady": "Blasts a large area",
+      "subtitleUsed": "Already used (max 1 per game)",
+      "tooltipReady": "Hits 5×5 without corners (21 cells). 1 bomb per game.",
+      "tooltipUsed": "You already used the bomb in this game."
+    },
+    "splatter": {
+      "name": "Splatter",
+      "subtitle": "12 random cells",
+      "title": "Hits 12 random cells."
+    },
+    "errors": {
+      "planeExhausted": {
+        "title": "Plane used up",
+        "message": "The plane can only be used once per game."
+      },
+      "bombLocked": {
+        "title": "Bomb locked",
+        "message": "The bomb unlocks after you sink 2 ships in this turn."
+      },
+      "splatterExhausted": {
+        "title": "Splatter used up",
+        "message": "Splatter can only be used twice per game."
+      }
+    }
+  },
+  "authForm": {
+    "titleLogin": "Sign in",
+    "titleRegister": "Create account",
+    "subtitle": "Sign in to create games, save your progress, and collect statistics.",
+    "labels": {
+      "name": "Name",
+      "password": "Password"
+    },
+    "placeholders": {
+      "name": "Your display name",
+      "password": "At least 6 characters"
+    },
+    "rememberMe": "Keep me signed in",
+    "errors": {
+      "generic": "Something went wrong. Please try again."
+    },
+    "buttons": {
+      "login": "Sign in",
+      "register": "Register"
+    },
+    "switch": {
+      "noAccount": "No account?",
+      "createNow": "Create now",
+      "alreadyRegistered": "Already registered?",
+      "toLogin": "Go to sign in"
+    }
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "tabs": {
+      "ships": "Most ships destroyed",
+      "wins": "Most wins"
+    },
+    "valueTitle": {
+      "ships": "Ships destroyed",
+      "wins": "Wins"
+    },
+    "loading": "Loading leaderboard…",
+    "empty": "No finished games yet.",
+    "errorLoad": "Failed to load leaderboard.",
+    "columns": {
+      "player": "Player",
+      "avgPerGame": "Ø / game",
+      "winrate": "Win rate",
+      "games": "Games"
+    }
+  },
+  "progress": {
+    "title": "Progress & Achievements",
+    "level": "Level",
+    "currentRank": "Current rank",
+    "totalPoints": "Total points",
+    "pointsShort": " pts",
+    "maxLevelReached": "Max level reached ✓",
+    "achievements": "Achievements",
+    "filters": {
+      "all": "All",
+      "inprogress": "In progress",
+      "done": "Completed"
+    },
+    "unlocked": "Unlocked",
+    "notUnlocked": "Not unlocked",
+    "event": "Event",
+    "tiers": "Tiers",
+    "completed": "Completed",
+    "nextStep": "Next step",
+    "pointsAtThreshold": "+{points} pts at {threshold}"
   }
 }

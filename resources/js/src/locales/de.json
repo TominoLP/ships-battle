@@ -11,7 +11,9 @@
     "ready": "Bereit",
     "placeRandom": "Zufällig platzieren",
     "showMyBoard": "Eigenes Brett anzeigen",
-    "hideMyBoard": "Eigenes Brett ausblenden"
+    "hideMyBoard": "Eigenes Brett ausblenden",
+    "startGame": "Spiel starten",
+    "cancel": "Abbrechen"
   },
   "status": {
     "join": "Erstelle ein neues Spiel oder tritt einem Spiel mit Code bei.",
@@ -36,18 +38,63 @@
   },
   "join": {
     "availableGames": "Verfügbare Spiele",
-    "createdBy": "Erstellt von {name}"
+    "createdBy": "Erstellt von {name}",
+    "cardTitle": "Code eingeben",
+    "cardDesc": "Du hast bereits einen Code? Eingeben und direkt loslegen.",
+    "title": "Game Code einlösen",
+    "instructions": "Der Code besteht aus 6 Zeichen. Wir prüfen ihn automatisch, sobald er vollständig ist.",
+    "codeLabel": "Game Code",
+    "connecting": "Verbindung wird hergestellt…",
+    "joinGame": "Spiel beitreten"
   },
   "placing": {
     "yourBoard": "Dein Spielbrett",
-    "placeAllShipsFirst": "Platziere zuerst alle Schiffe."
+    "placeAllShipsFirst": "Platziere zuerst alle Schiffe.",
+    "hint": "Ziehe das nächste Schiff auf das Board. Blau = gültig, Rot = ungültig. Drücke R zum Drehen.",
+    "remainingTotal": "verbleibend / gesamt",
+    "allPlaced": "Alle platziert",
+    "rotate": "Drehen",
+    "rotateTitle": "Drehen (R)",
+    "rotateShortcut": "(R)",
+    "orientation": { "horizontal": "Horizontal", "vertical": "Vertikal" }
   },
   "playing": {
     "abilityHint": "Fähigkeiten auswählen und ziehen. (R dreht Flugzeug)",
-    "yourShips": "Deine Schiffe"
+    "yourShips": "Deine Schiffe",
+    "hintGhostActive": "Geist aktiv – klicke zum Anwenden.",
+    "hintClickToFire": "Klicke auf ein Feld, um zu schießen."
+  },
+  "create": {
+    "heading": "Wie möchtest du starten?",
+    "subheading": "Wähle unten ein Szenario oder gib einen Game Code ein, wenn du eingeladen wurdest.",
+    "createTitle": "Spiel erstellen",
+    "private": {
+      "title": "Privates Spiel",
+      "blurb": "Nur Spieler mit deinem Code können beitreten. Teile ihn nach dem Erstellen.",
+      "cardTitle": "Privates Match",
+      "cardDesc": "Starte ein Spiel und teile den Code mit deinem Mitspieler."
+    },
+    "public": {
+      "title": "Öffentliches Spiel",
+      "blurb": "Dein Match erscheint in der öffentlichen Lobby. Spieler können ohne Code beitreten.",
+      "cardTitle": "Öffentliches Match",
+      "cardDesc": "Erstelle ein öffentliches Spiel, dem jeder in der Lobby beitreten kann."
+    }
+  },
+  "bot": {
+    "cardTitle": "Gegen Bot spielen",
+    "cardDesc": "Trainiere deine Flottenstrategie gegen unseren Bot. Perfekt zum Aufwärmen."
   },
   "common": {
-    "ok": "OK"
+    "ok": "OK",
+    "select": "Auswählen",
+    "backToSelection": "Zur Auswahl",
+    "undo": "Zurück",
+    "undoTitle": "Zurück (Strg+Z)",
+    "undoShortcut": "(Strg+Z)",
+    "locked": "Gesperrt",
+    "exhausted": "Aufgebraucht",
+    "pleaseWait": "Bitte warten…"
   },
   "achievements": {
     "title": "Erfolge"
@@ -56,5 +103,140 @@
     "label": "Sprache",
     "en": "Englisch",
     "de": "Deutsch"
+  },
+  "lobby": {
+    "code": "Code",
+    "copied": "Code in die Zwischenablage kopiert!",
+    "copyHint": "Kopiere den Code oder den Link aus der Adressleiste und sende ihn deinem Gegner!"
+  },
+  "gameOver": {
+    "won": "Gewonnen",
+    "lost": "Verloren",
+    "winnerLabel": "Gewinner:",
+    "backToLobby": "Zurück zur Lobby",
+    "rematch": {
+      "start": "Rematch starten",
+      "waiting": "Warte auf Gegner …",
+      "ready": "Starte neue Runde …",
+      "statusWaiting": "Sobald dein Gegner zustimmt, startet automatisch eine neue Runde.",
+      "statusReady": "Rematch akzeptiert – neues Spiel wird vorbereitet."
+    }
+  },
+  "stats": {
+    "title": "Statistik",
+    "playTime": "Spielzeit",
+    "yourAttacks": "Deine Angriffe",
+    "enemyAttacks": "Angriffe von {name}",
+    "opponent": "Gegner",
+    "labels": {
+      "shotsFired": "Abgefeuerte Schüsse",
+      "hits": "Treffer",
+      "accuracy": "Treffgenauigkeit",
+      "shipsSunk": "Schiffe versenkt",
+      "yourIntactCells": "Deine intakten Felder"
+    }
+  },
+  "abilities": {
+    "plane": {
+      "name": "Flugzeug",
+      "subtitle": "Komplette Reihe/Spalte",
+      "title": "Deckt eine komplette Zeile oder Spalte auf. R zum Drehen."
+    },
+    "bomb": {
+      "name": "Bombe",
+      "subtitleReady": "Sprengt großen Bereich",
+      "subtitleUsed": "Bereits verwendet (max. 1 pro Spiel)",
+      "tooltipReady": "Trifft 5×5 ohne Ecken (21 Felder). 1 Bombe pro Spiel.",
+      "tooltipUsed": "Du hast die Bombe in diesem Spiel bereits verbraucht."
+    },
+    "splatter": {
+      "name": "Streuschuss",
+      "subtitle": "12 zufällige Felder",
+      "title": "Trifft 12 zufällige Felder."
+    },
+    "errors": {
+      "planeExhausted": {
+        "title": "Flugzeug verbraucht",
+        "message": "Das Flugzeug kann nur einmal pro Spiel eingesetzt werden."
+      },
+      "bombLocked": {
+        "title": "Bombe gesperrt",
+        "message": "Die Bombe wird erst freigeschaltet, wenn du in diesem Zug 2 Schiffe versenkt hast."
+      },
+      "splatterExhausted": {
+        "title": "Streuschuss verbraucht",
+        "message": "Der Streuschuss kann nur zweimal pro Spiel eingesetzt werden."
+      }
+    }
+  },
+  "authForm": {
+    "titleLogin": "Anmeldung",
+    "titleRegister": "Konto erstellen",
+    "subtitle": "Melde dich an, um Spiele zu erstellen, deinen Fortschritt zu speichern und Statistiken zu sammeln.",
+    "labels": {
+      "name": "Name",
+      "password": "Passwort"
+    },
+    "placeholders": {
+      "name": "Dein Anzeigename",
+      "password": "Mindestens 6 Zeichen"
+    },
+    "rememberMe": "Angemeldet bleiben",
+    "errors": {
+      "generic": "Etwas ist schiefgelaufen. Bitte versuche es erneut."
+    },
+    "buttons": {
+      "login": "Anmelden",
+      "register": "Registrieren"
+    },
+    "switch": {
+      "noAccount": "Kein Konto?",
+      "createNow": "Jetzt erstellen",
+      "alreadyRegistered": "Bereits registriert?",
+      "toLogin": "Zur Anmeldung"
+    }
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "tabs": {
+      "ships": "Meiste zerstörte Schiffe",
+      "wins": "Meiste Siege"
+    },
+    "valueTitle": {
+      "ships": "Zerstörte Schiffe",
+      "wins": "Siege"
+    },
+    "loading": "Lade Rangliste …",
+    "empty": "Noch keine abgeschlossenen Spiele.",
+    "errorLoad": "Leaderboard konnte nicht geladen werden.",
+    "columns": {
+      "player": "Spieler",
+      "avgPerGame": "Ø / Spiel",
+      "winrate": "Winrate",
+      "games": "Spiele"
+    }
+  },
+  "progress": {
+    "title": "Fortschritt & Erfolge",
+    "level": "Level",
+    "currentRank": "Aktueller Rang",
+    "totalPoints": "Gesamtpunkte",
+    "pointsShort": " P",
+    "maxLevelReached": "Max. Level erreicht ✓",
+    "achievements": "Erfolge",
+    "filters": {
+      "all": "Alle",
+      "inprogress": "In Arbeit",
+      "done": "Abgeschlossen"
+    },
+    "unlocked": "Freigeschaltet",
+    "notUnlocked": "Noch nicht freigeschaltet",
+    "event": "Event",
+    "tiers": "Stufen",
+    "completed": "Abgeschlossen",
+    "nextStep": "Nächste Stufe",
+    "pointsAtThreshold": "+{points} Punkte bei {threshold}"
   }
 }
+
+
