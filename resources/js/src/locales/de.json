@@ -1,0 +1,60 @@
+{
+  "app": { "title": "Schiffeversenken" },
+  "auth": {
+    "checking": "Anmeldung wird geprüft …",
+    "signedInAs": "Angemeldet als {name}",
+    "logout": "Abmelden"
+  },
+  "actions": {
+    "leaveGame": "Spiel verlassen",
+    "join": "Beitreten",
+    "ready": "Bereit",
+    "placeRandom": "Zufällig platzieren",
+    "showMyBoard": "Eigenes Brett anzeigen",
+    "hideMyBoard": "Eigenes Brett ausblenden"
+  },
+  "status": {
+    "join": "Erstelle ein neues Spiel oder tritt einem Spiel mit Code bei.",
+    "lobby": "Warte in der Lobby, bis beide bereit sind.",
+    "placing": "Platziere deine Schiffe auf dem Spielfeld.",
+    "playing": {
+      "yourTurn": "Dein Zug!",
+      "enemyTurn": "Gegner am Zug …",
+      "over": "Spiel beendet."
+    }
+  },
+  "ships": {
+    "Battleship": "Schlachtschiff",
+    "Cruiser": "Kreuzer",
+    "Destroyer": "Zerstörer",
+    "Submarine": "U-Boot"
+  },
+  "errors": {
+    "invalidCode": "Der Spielcode wurde nicht akzeptiert. Bitte prüfe die sechs Zeichen.",
+    "codeInvalidGeneric": "Der eingegebene Spielcode ist ungültig.",
+    "codeInvalidOrMissing": "Der Spielcode ist ungültig oder das Spiel existiert nicht mehr."
+  },
+  "join": {
+    "availableGames": "Verfügbare Spiele",
+    "createdBy": "Erstellt von {name}"
+  },
+  "placing": {
+    "yourBoard": "Dein Spielbrett",
+    "placeAllShipsFirst": "Platziere zuerst alle Schiffe."
+  },
+  "playing": {
+    "abilityHint": "Fähigkeiten auswählen und ziehen. (R dreht Flugzeug)",
+    "yourShips": "Deine Schiffe"
+  },
+  "common": {
+    "ok": "OK"
+  },
+  "achievements": {
+    "title": "Erfolge"
+  },
+  "lang": {
+    "label": "Sprache",
+    "en": "Englisch",
+    "de": "Deutsch"
+  }
+}

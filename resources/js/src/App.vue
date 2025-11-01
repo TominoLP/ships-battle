@@ -12,6 +12,8 @@ import EnemyShips from '@/src/components/Placement/EnemyShips.vue';
 import AbilityPanel from '@/src/components/AbilityPanel.vue';
 import AuthPanel from '@/src/components/Auth/AuthPanel.vue';
 import LeaderboardPanel from '@/src/components/Stats/LeaderboardPanel.vue';
+import Progress from '@/src/components/Stats/Progress.vue';
+import LocaleSwitch from '@/src/components/Shell/LocaleSwitch.vue';
 
 import { useGameState } from '@/src/composables/useGameState';
 import { usePlacement } from '@/src/composables/placement';
@@ -21,9 +23,12 @@ import type { PlacedShip, ShipSpec } from '@/src/types';
 import GameControllerRoutes from '@/actions/App/Http/Controllers/GameController';
 import { api } from '@/src/composables/useApi';
 import { useAuth } from '@/src/composables/useAuth';
-import Progress from '@/src/components/Stats/Progress.vue';
 
-const appVersion: string = __APP_VERSION__
+import { useLang } from '@/src/composables/useLang';
+
+const { t } = useLang();
+
+const appVersion: string = __APP_VERSION__;
 
 const gs = proxyRefs(useGameState());
 const auth = useAuth();
@@ -42,17 +47,10 @@ const is_bot_game = ref(false);
 // Fleet spec
 const fleet: ShipSpec[] = [
   { name: 'Battleship', size: 5, count: 1 },
-  { name: 'Cruiser', size: 4, count: 2 },
-  { name: 'Destroyer', size: 3, count: 3 },
-  { name: 'Submarine', size: 2, count: 4 }
+  { name: 'Cruiser',     size: 4, count: 2 },
+  { name: 'Destroyer',   size: 3, count: 3 },
+  { name: 'Submarine',   size: 2, count: 4 }
 ];
-
-const de: Record<number, string> = {
-  5: 'Flugzeugträger',
-  4: 'Schlachtschiff',
-  3: 'Kreuzer',
-  2: 'U-Boot'
-};
 
 const showMyBoard = ref(false);
 
@@ -90,10 +88,9 @@ watch(() => gs.gameId, (current, previous) => {
 // Abilities composable
 const abilities = useAbilities(12);
 
-// Ship drag composable
-// UI-friendly fleet
+// UI-friendly fleet (localized names)
 const uiFleet = computed(() =>
-  fleet.map(f => ({ name: de[f.size] ?? f.name, size: f.size, total: f.count }))
+  fleet.map(f => ({ name: t(`ships.${f.name}`), size: f.size, total: f.count }))
 );
 
 // Placed sizes (for palette)
@@ -118,7 +115,7 @@ const bombsRemaining = computed(() =>
   Math.max(0, BOMBS_TOTAL - gs.abilityUsage.comb)
 );
 
-const isDisabled = computed(() => !placement.allPlaced.value)
+const isDisabled = computed(() => !placement.allPlaced.value);
 
 const planeExhausted = computed(() => planeRemaining.value === 0);
 const splatterExhausted = computed(() => splatterRemaining.value === 0);
@@ -143,13 +140,13 @@ function closePopup() {
 }
 
 function handleGameOverClose() {
-  auth.refresh()
+  auth.refresh();
   gs.resetForNewGame();
   resetPlacementState();
 }
 
 function handleRematchRequest() {
-  auth.refresh()
+  auth.refresh();
   void gs.requestRematch();
 }
 
@@ -158,7 +155,7 @@ function handleCreateGame(options?: { public?: boolean }) {
 }
 
 function handleCreateBotGame() {
-	is_bot_game.value = true
+  is_bot_game.value = true;
   void gs.createBotGame();
 }
 
@@ -168,7 +165,7 @@ async function extractApiMessage(err: unknown, fallback: string): Promise<string
 
   if (response) {
     const status = response.status;
-    const defaultInvalidCode = 'Der eingegebene Spielcode ist ungültig.';
+    const defaultInvalidCode = t('errors.codeInvalidGeneric');
 
     try {
       const data = await response.clone().json();
@@ -191,7 +188,7 @@ async function extractApiMessage(err: unknown, fallback: string): Promise<string
         const text = await response.clone().text();
         if (text.trim().length > 0) {
           if (/selected code is invalid/i.test(text) || status === 422) {
-            return 'Der Spielcode wurde nicht akzeptiert. Bitte prüfe die sechs Zeichen.';
+            return t('errors.invalidCode');
           }
           return text.trim();
         }
@@ -218,14 +215,14 @@ async function handleJoinGame(payload: { code: string; onSuccess: () => void; on
   } catch (err) {
     const message = await extractApiMessage(
       err,
-      'Der Spielcode ist ungültig oder das Spiel existiert nicht mehr.'
+      t('errors.codeInvalidOrMissing')
     );
     payload.onError(message);
   }
 }
 
 function handleLeaveGame() {
-  auth.refresh()
+  auth.refresh();
   gs.leaveGame();
   resetPlacementState();
 }
@@ -400,13 +397,14 @@ const playingItems = computed(() => {
   });
 });
 
-// Status message
+// Status message (localized)
 const statusMessage = computed(() => {
   switch (gs.step) {
-    case 'join': return 'Erstelle ein neues Spiel oder tritt einem Spiel mit Code bei.';
-    case 'lobby': return 'Warte in der Lobby, bis beide bereit sind.';
-    case 'placing': return 'Platziere deine Schiffe auf dem Spielfeld.';
-    case 'playing': return gs.gameOver ? 'Spiel beendet.' : (gs.myTurn ? 'Dein Zug!' : 'Gegner am Zug …');
+    case 'join':    return t('status.join');
+    case 'lobby':   return t('status.lobby');
+    case 'placing': return t('status.placing');
+    case 'playing': return gs.gameOver ? t('status.playing.over')
+      : (gs.myTurn ? t('status.playing.yourTurn') : t('status.playing.enemyTurn'));
     default: return '';
   }
 });
@@ -569,7 +567,7 @@ async function onEnemyCellClick(x: number, y: number) {
   <div class="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6 sm:p-8 text-slate-200">
     <div class="max-w-[1800px] mx-auto">
       <div v-if="booting" class="flex min-h-[60vh] items-center justify-center text-slate-400">
-        Anmeldung wird geprüft …
+        {{ t('auth.checking') }}
       </div>
       <template v-else>
         <div v-if="!isAuthenticated" class="py-12">
@@ -585,15 +583,21 @@ async function onEnemyCellClick(x: number, y: number) {
                     class="text-sm text-red-400 hover:text-red-500"
                     @click="handleLeaveGame"
                   >
-                    Spiel verlassen
+                    {{ t('actions.leaveGame') }}
                   </button>
                 </div>
                 <div class="ml-3 inline-flex items-center gap-3 rounded-full border border-slate-700 bg-slate-900/80 px-4 py-2 shadow-md">
-                  <span class="text-sm text-slate-300">Angemeldet als <span class="font-semibold">{{ accountName }}</span></span>
+                  <span class="text-sm text-slate-300">
+                    {{ t('auth.signedInAs', { name: accountName }) }}
+                  </span>
                   <button class="text-sm text-red-400 hover:text-red-500" type="button" @click="handleLogout">
-                    Abmelden
+                    {{ t('auth.logout') }}
                   </button>
                 </div>
+
+                <!-- Locale switcher -->
+                <LocaleSwitch class="ml-3" />
+
                 <a
                   href="https://github.com/TominoLP/ships-battle"
                   target="_blank"
@@ -607,11 +611,11 @@ async function onEnemyCellClick(x: number, y: number) {
                 <a
                   @click="showAchievements = true"
                   rel="noopener noreferrer"
-                  title="Achievements"
-                  class="inline-flex items-center gap-3 rounded-full border border-amber-300  ml-3 bg-slate-900/80 px-4 py-2 shadow-md hover:bg-slate-800/80  focus:outline-none focus:ring-2 focus:ring-blue-500/60"
+                  :title="t('achievements.title')"
+                  class="inline-flex items-center gap-3 rounded-full border border-amber-300 ml-3 bg-slate-900/80 px-4 py-2 shadow-md hover:bg-slate-800/80  focus:outline-none focus:ring-2 focus:ring-blue-500/60"
                 >
                   <i class="text-amber-300 fa-solid fa-trophy"></i>
-                  <span class="sr-only">Achievements</span>
+                  <span class="sr-only">{{ t('achievements.title') }}</span>
                 </a>
               </div>
 
@@ -624,7 +628,7 @@ async function onEnemyCellClick(x: number, y: number) {
                   <path d="M12 20.5c-3.5 0-6-2.5-6-5.5" />
                   <path d="M12 20.5c3.5 0 6-2.5 6-5.5" />
                 </svg>
-                <h1 class="text-3xl font-semibold text-blue-400">Schiffeversenken</h1>
+                <h1 class="text-3xl font-semibold text-blue-400">{{ t('app.title') }}</h1>
               </div>
 
               <p class="mt-2 text-slate-400">{{ statusMessage }}</p>
@@ -643,20 +647,20 @@ async function onEnemyCellClick(x: number, y: number) {
             </div>
             <LeaderboardPanel :userName="accountName"/>
             <div v-if="gs.gamesAvailable.length != 0" class="rounded-xl border border-slate-700 bg-slate-900/80 p-6 shadow-xl">
-              <h2 class="mb-4 text-lg font-semibold text-slate-200">Verfügbare Spiele</h2>
+              <h2 class="mb-4 text-lg font-semibold text-slate-200">{{ t('join.availableGames') }}</h2>
               <div v-for="game in gs.gamesAvailable" :key="game.code">
                 <div
                   class="mb-3 flex items-center justify-between rounded-lg border border-slate-600 bg-slate-800/70 px-4 py-3"
                 >
                   <div>
                     <span class="font-mono font-semibold text-slate-200">{{ game.code }}</span>
-                    <span class="ml-2 text-sm text-slate-400">Erstellt von {{ game.enemy_name }}</span>
+                    <span class="ml-2 text-sm text-slate-400">{{ t('join.createdBy', { name: game.enemy_name }) }}</span>
                   </div>
                   <button
                     class="rounded-lg bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-500"
                     @click="gs.gameCode = game.code; gs.joinGame()"
                   >
-                    Beitreten
+                    {{ t('actions.join') }}
                   </button>
                 </div>
               </div>
@@ -672,9 +676,8 @@ async function onEnemyCellClick(x: number, y: number) {
           </div>
 
           <!-- PLACING -->
-          <section v-else-if="gs.step === 'placing'"
-                   class="mx-auto w-max rounded-xl border border-slate-700 bg-slate-900/80 p-4 shadow-xl">
-            <h3 class="mb-4 text-center text-slate-200">Dein Spielbrett</h3>
+          <section v-else-if="gs.step === 'placing'" class="mx-auto w-max rounded-xl border border-slate-700 bg-slate-900/80 p-4 shadow-xl">
+            <h3 class="mb-4 text-center text-slate-200">{{ t('placing.yourBoard') }}</h3>
 
             <div class="grid grid-cols-[minmax(220px,280px)_1fr] gap-4">
               <div>
@@ -695,7 +698,7 @@ async function onEnemyCellClick(x: number, y: number) {
                   @click="placeRandomly()"
                 >
                   <i class="fa-solid fa-random text-sm"></i>
-                  <span class="text-xs sm:text-[13px]">Zufällig platzieren</span>
+                  <span class="text-xs sm:text-[13px]">{{ t('actions.placeRandom') }}</span>
                 </button>
 
                 <div class="relative group inline-block w-full">
@@ -705,11 +708,11 @@ async function onEnemyCellClick(x: number, y: number) {
                     :aria-describedby="isDisabled ? 'ready-tooltip' : undefined"
                     class="mt-4 w-full rounded-lg border px-3 py-2 transition"
                     :class="isDisabled
-        ? 'bg-slate-800 border-slate-600 cursor-not-allowed opacity-80'
-        : 'bg-emerald-600 hover:bg-emerald-700 border-emerald-500'"
+                      ? 'bg-slate-800 border-slate-600 cursor-not-allowed opacity-80'
+                      : 'bg-emerald-600 hover:bg-emerald-700 border-emerald-500'"
                     @click="gs.readyUp(placement.placedShips)"
                   >
-                    Bereit
+                    {{ t('actions.ready') }}
                   </button>
 
                   <!-- Tooltip (shown on wrapper hover when disabled) -->
@@ -718,10 +721,10 @@ async function onEnemyCellClick(x: number, y: number) {
                     id="ready-tooltip"
                     role="tooltip"
                     class="pointer-events-none absolute left-1/2 -translate-x-1/2 -top-2 -translate-y-full
-             hidden group-hover:block whitespace-nowrap rounded-md bg-gray-900 px-2 py-1
-             text-xs text-white shadow-lg"
+                       hidden group-hover:block whitespace-nowrap rounded-md bg-gray-900 px-2 py-1
+                       text-xs text-white shadow-lg"
                   >
-                    Platziere zuerst alle Schiffe.
+                    {{ t('placing.placeAllShipsFirst') }}
                     <span class="absolute left-1/2 top-full -translate-x-1/2 h-2 w-2 rotate-45 bg-gray-900"></span>
                   </div>
                 </div>
@@ -760,7 +763,7 @@ async function onEnemyCellClick(x: number, y: number) {
             <section :class="['rounded-xl border border-slate-700 bg-slate-900/80 p-4 shadow-xl', showMyBoard ? 'lg:col-span-2' : 'lg:col-span-2']">
               <div class="mb-4 flex items-center justify-between">
                 <h3 class="text-slate-200">{{ gs.enemyName }}</h3>
-                <div class="text-xs text-slate-500">Fähigkeiten auswählen und ziehen. (R dreht Flugzeug)</div>
+                <div class="text-xs text-slate-500">{{ t('playing.abilityHint') }}</div>
               </div>
 
               <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -810,12 +813,12 @@ async function onEnemyCellClick(x: number, y: number) {
             <!-- YOUR SHIPS -->
             <section :class="['rounded-xl border border-slate-700 bg-slate-900/80 p-4 shadow-xl h-full', showMyBoard ? 'lg:col-span-2' : 'lg:col-span-1']">
               <div class="mb-4 flex items-center justify-between">
-                <h3 class="text-slate-200">Deine Schiffe</h3>
+                <h3 class="text-slate-200">{{ t('playing.yourShips') }}</h3>
                 <button
                   class="rounded-lg border border-slate-600 px-3 py-1 text-sm text-slate-200 hover:bg-slate-800"
                   @click="showMyBoard = !showMyBoard"
                 >
-                  {{ showMyBoard ? 'Eigenes Brett ausblenden' : 'Eigenes Brett anzeigen' }}
+                  {{ showMyBoard ? t('actions.hideMyBoard') : t('actions.showMyBoard') }}
                 </button>
               </div>
 
@@ -853,7 +856,7 @@ async function onEnemyCellClick(x: number, y: number) {
                 class="rounded-md border border-slate-600 px-3 py-1.5 text-slate-200 hover:bg-slate-800"
                 @click="closePopup()"
               >
-                OK
+                {{ t('common.ok') }}
               </button>
             </div>
           </div>

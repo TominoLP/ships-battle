@@ -1,0 +1,60 @@
+{
+  "app": { "title": "Battleships" },
+  "auth": {
+    "checking": "Checking sign-in …",
+    "signedInAs": "Signed in as {name}",
+    "logout": "Log out"
+  },
+  "actions": {
+    "leaveGame": "Leave game",
+    "join": "Join",
+    "ready": "Ready",
+    "placeRandom": "Place randomly",
+    "showMyBoard": "Show my board",
+    "hideMyBoard": "Hide my board"
+  },
+  "status": {
+    "join": "Create a new game or join with a code.",
+    "lobby": "Wait in the lobby until both are ready.",
+    "placing": "Place your ships on the board.",
+    "playing": {
+      "yourTurn": "Your move!",
+      "enemyTurn": "Opponent’s turn…",
+      "over": "Game over."
+    }
+  },
+  "ships": {
+    "Battleship": "Battleship",
+    "Cruiser": "Cruiser",
+    "Destroyer": "Destroyer",
+    "Submarine": "Submarine"
+  },
+  "errors": {
+    "invalidCode": "The game code was not accepted. Please check the six characters.",
+    "codeInvalidGeneric": "The entered game code is invalid.",
+    "codeInvalidOrMissing": "The game code is invalid or the game no longer exists."
+  },
+  "join": {
+    "availableGames": "Available games",
+    "createdBy": "Created by {name}"
+  },
+  "placing": {
+    "yourBoard": "Your board",
+    "placeAllShipsFirst": "Place all ships first."
+  },
+  "playing": {
+    "abilityHint": "Pick an ability and drag. (R rotates plane)",
+    "yourShips": "Your ships"
+  },
+  "common": {
+    "ok": "OK"
+  },
+  "achievements": {
+    "title": "Achievements"
+  },
+  "lang": {
+    "label": "Language",
+    "en": "English",
+    "de": "German"
+  }
+}
