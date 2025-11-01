@@ -44,9 +44,25 @@ class Achievement extends Model
         'is_tiered',
         'event_points',
     ];
+    protected $appends = [
+        'i18n_name',
+        'i18n_description'
+    ];
 
     public function steps(): HasMany
     {
         return $this->hasMany(AchievementStep::class)->orderBy('sort_index');
+    }
+
+
+    public function getNameAttribute($value): string {
+        $k = "achievements.{$this->attributes['key']}.name";
+        $t = __($k);
+        return $t === $k ? ($value ?? $this->attributes['key']) : $t;
+    }
+    public function getDescriptionAttribute($value): ?string {
+        $k = "achievements.{$this->attributes['key']}.description";
+        $t = __($k);
+        return $t === $k ? ($value ?? null) : $t;
     }
 }

@@ -2,10 +2,12 @@ type WayfinderCall = { url: string; method: string }
 type JsonBody = Record<string, unknown> | undefined
 
 function buildHeaders(init?: RequestInit): Record<string, string> {
+	const lang = (localStorage.getItem('locale') || navigator.language || 'en').slice(0,2);
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'X-Requested-With': 'XMLHttpRequest'
+    'X-Requested-With': 'XMLHttpRequest',
+		'X-Locale': lang === 'de' ? 'de' : 'en',
   };
 
   if (init?.headers) {
