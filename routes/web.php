@@ -19,6 +19,7 @@ Route::prefix('api')->group(function () {
     Route::middleware('auth')->group(function () {
         Route::prefix('game')->group(function () {
             Route::post('/create', [GameController::class, 'create']);
+            Route::post('/bot', [GameController::class, 'createBot']);
             Route::post('/join', [GameController::class, 'join']);
             Route::post('/shoot', [GameController::class, 'shoot']);
             Route::post('/place-ships', [GameController::class, 'placeShips']);

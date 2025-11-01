@@ -13,6 +13,7 @@ use App\Models\Game;
 use App\Models\Player;
 use App\Services\AchievementService;
 use App\Services\BattleService;
+use App\Services\BotMatchService;
 use App\Services\PlacementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,7 +25,8 @@ class GameController extends Controller
     public function __construct(
         private readonly PlacementService $placementService,
         private readonly BattleService $battleService,
-        private readonly AchievementService $achievements
+        private readonly AchievementService $achievements,
+        private readonly BotMatchService $botMatches,
     ) {}
 
     public function join(Request $request): JsonResponse
@@ -126,6 +128,28 @@ class GameController extends Controller
             'player_id' => $player->id,
             'game_id' => $game->id,
             'public' => $game->public,
+        ]);
+    }
+
+    public function createBot(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return response()->json(['error' => 'Authentication required'], 401);
+        }
+
+        $match = $this->botMatches->createFor($user);
+        $game = $match['game'];
+        $player = $match['player'];
+        $bot = $match['bot'];
+
+        return response()->json([
+            'game_code' => $game->code,
+            'player_id' => $player->id,
+            'game_id' => $game->id,
+            'bot_player_id' => $bot->id,
+            'bot_name' => $bot->name,
         ]);
     }
 
@@ -239,6 +263,17 @@ class GameController extends Controller
             if ($actor) {
                 $this->awardFromShot($actor, $payload);
             }
+
+            if (! ($payload['gameOver'] ?? false) && $actor) {
+                $botTurn = $this->botMatches->syncBotTurn($actor);
+                if ($botTurn) {
+                    $payload['botTurn'] = $botTurn;
+                    if ($botTurn['gameOver'] ?? false) {
+                        $payload['gameOver'] = true;
+                        $payload['winner'] = $botTurn['winner'] ?? $payload['winner'] ?? null;
+                    }
+                }
+            }
         }
 
         return response()->json($payload);
@@ -300,6 +335,17 @@ class GameController extends Controller
             $actor = Player::with('user')->find($request->integer('player_id'));
             if ($actor) {
                 $this->awardFromAbility($actor, $payload);
+            }
+
+            if (! ($payload['gameOver'] ?? false) && $actor) {
+                $botTurn = $this->botMatches->syncBotTurn($actor);
+                if ($botTurn) {
+                    $payload['botTurn'] = $botTurn;
+                    if ($botTurn['gameOver'] ?? false) {
+                        $payload['gameOver'] = true;
+                        $payload['winner'] = $botTurn['winner'] ?? $payload['winner'] ?? null;
+                    }
+                }
             }
         }
 

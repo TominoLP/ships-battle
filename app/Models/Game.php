@@ -19,6 +19,7 @@ use Illuminate\Support\Str;
  * @property string $status
  * @property int|null $winner_player_id
  * @property bool $public
+ * @property bool $is_bot_match
  *
  * @method static where(string $string, string $code)
  * @method static create()
@@ -40,6 +41,7 @@ class Game extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'public' => 'boolean',
+        'is_bot_match' => 'boolean',
     ];
 
     protected $fillable = [
@@ -47,6 +49,7 @@ class Game extends Model
         'status',
         'winner_player_id',
         'public',
+        'is_bot_match',
     ];
 
     protected static function boot(): void

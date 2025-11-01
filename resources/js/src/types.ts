@@ -83,3 +83,51 @@ export type AchievementItem = {
   progress: AchievementProgress;
   event_points: number;
 };
+
+export type RematchMapping = {
+	old_player_id: number;
+	new_player_id: number;
+	name: string;
+	user_id: number | null;
+	is_turn: boolean;
+};
+
+export type RematchResponse = {
+	status: 'waiting' | 'ready';
+	message?: string;
+	game?: { id: number; code: string };
+	player?: RematchMapping;
+	players?: RematchMapping[];
+};
+
+export type RematchEventPayload = {
+	next?: { id: number; code: string };
+	players?: RematchMapping[];
+};
+
+export type PublicGameSummary = {
+	id: number;
+	code: string;
+	enemy_name: string;
+};
+
+export type BotTurnShot = {
+	x: number;
+	y: number;
+	result: 'hit' | 'miss' | 'already' | 'sunk';
+};
+
+export type BotTurnAction = {
+	type: 'shot' | 'ability';
+	ability?: 'plane' | 'comb' | 'splatter' | null;
+	shots: BotTurnShot[];
+	sunk?: Array<{ size: number; cells: number[][] }>;
+};
+
+export type BotTurnPayload = {
+	shots: BotTurnShot[];
+	sunk?: Array<{ size: number; cells: number[][] }>;
+	actions?: BotTurnAction[];
+	gameOver: boolean;
+	winner?: { id: number; name: string };
+};

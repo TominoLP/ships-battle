@@ -37,6 +37,8 @@ const showAchievements = ref(false);
 const userLevel = computed(() => auth.user.value?.level ?? null);
 const userAchievements = computed(() => auth.user.value?.achievements ?? []);
 
+const is_bot_game = ref(false);
+
 // Fleet spec
 const fleet: ShipSpec[] = [
   { name: 'Battleship', size: 5, count: 1 },
@@ -153,6 +155,73 @@ function handleRematchRequest() {
 
 function handleCreateGame(options?: { public?: boolean }) {
   void gs.createGame(options);
+}
+
+function handleCreateBotGame() {
+	is_bot_game.value = true
+  void gs.createBotGame();
+}
+
+async function extractApiMessage(err: unknown, fallback: string): Promise<string> {
+  const anyErr = err as any;
+  const response: Response | undefined = anyErr?.response;
+
+  if (response) {
+    const status = response.status;
+    const defaultInvalidCode = 'Der eingegebene Spielcode ist ungültig.';
+
+    try {
+      const data = await response.clone().json();
+      if (typeof data?.error === 'string' && data.error.trim().length > 0) {
+        const message = data.error.trim();
+        if (/selected code is invalid/i.test(message)) {
+          return defaultInvalidCode;
+        }
+        return message;
+      }
+      if (typeof data?.message === 'string' && data.message.trim().length > 0) {
+        const message = data.message.trim();
+        if (/selected code is invalid/i.test(message) || (status === 422 && message.length > 0)) {
+          return defaultInvalidCode;
+        }
+        return message;
+      }
+    } catch {
+      try {
+        const text = await response.clone().text();
+        if (text.trim().length > 0) {
+          if (/selected code is invalid/i.test(text) || status === 422) {
+            return 'Der Spielcode wurde nicht akzeptiert. Bitte prüfe die sechs Zeichen.';
+          }
+          return text.trim();
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  if (typeof anyErr?.message === 'string' && anyErr.message.trim().length > 0) {
+    return anyErr.message.trim();
+  }
+
+  return fallback;
+}
+
+async function handleJoinGame(payload: { code: string; onSuccess: () => void; onError: (message: string) => void }) {
+  try {
+    if (gs.gameCode !== payload.code) {
+      gs.gameCode = payload.code;
+    }
+    await gs.joinGame();
+    payload.onSuccess();
+  } catch (err) {
+    const message = await extractApiMessage(
+      err,
+      'Der Spielcode ist ungültig oder das Spiel existiert nicht mehr.'
+    );
+    payload.onError(message);
+  }
 }
 
 function handleLeaveGame() {
@@ -568,7 +637,8 @@ async function onEnemyCellClick(x: number, y: number) {
               <CreatePanel
                 v-model:gameCode="gs.gameCode"
                 @create="handleCreateGame"
-                @join="gs.joinGame"
+                @create-bot="handleCreateBotGame"
+                @join="handleJoinGame"
               />
             </div>
             <LeaderboardPanel :userName="accountName"/>
@@ -794,6 +864,7 @@ async function onEnemyCellClick(x: number, y: number) {
             :youWon="gs.youWon"
             :rematchState="gs.rematchState"
             :rematchError="gs.rematchError"
+						:is_bot_game="is_bot_game"
             @close="handleGameOverClose"
             @rematch="handleRematchRequest"
           />

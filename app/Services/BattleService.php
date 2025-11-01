@@ -316,6 +316,10 @@ class BattleService
 
     private function recordHistory(Game $game, Player $winner, Player $loser): void
     {
+        if ($game->is_bot_match) {
+            return;
+        }
+
         $gameId = $game->id;
 
         $winnerShipsDestroyed = Move::where('game_id', $gameId)

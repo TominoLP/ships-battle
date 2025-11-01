@@ -6,7 +6,8 @@ const props = defineProps({
   youWon: { type: [Boolean, Object, null], default: null },
   winnerName: { type: [String, Object], default: '' },
   rematchState: { type: [String, Object], default: 'idle' },
-  rematchError: { type: [String, Object, null], default: null }
+  rematchError: { type: [String, Object, null], default: null },
+	is_bot_game: { type: [Boolean, Object], default: false }
 });
 const emit = defineEmits<{
   (e: 'close'): void
@@ -70,6 +71,7 @@ function onClose() {
 
         <div class="space-y-3">
           <button
+						v-if="gam"
             type="button"
             :disabled="isDisabled"
             class="w-full rounded-2xl px-4 py-2 font-semibold shadow-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition"

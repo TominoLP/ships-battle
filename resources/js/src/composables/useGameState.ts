@@ -1,35 +1,8 @@
 import { ref, unref, watch } from 'vue';
-import GameController, { getAvailableGames } from '@/actions/App/Http/Controllers/GameController';
+import GameController from '@/actions/App/Http/Controllers/GameController';
 import { api } from '@/src/composables/useApi';
-import type { PlacedShip, Step } from '@/src/types';
+import type { PlacedShip, Step, RematchMapping, RematchResponse, PublicGameSummary, RematchEventPayload, BotTurnPayload } from '@/src/types';
 import { useGameSocket, usePublicGameStream } from '@/src/composables/useGameSocket';
-
-type RematchMapping = {
-  old_player_id: number;
-  new_player_id: number;
-  name: string;
-  user_id: number | null;
-  is_turn: boolean;
-};
-
-type RematchResponse = {
-  status: 'waiting' | 'ready';
-  message?: string;
-  game?: { id: number; code: string };
-  player?: RematchMapping;
-  players?: RematchMapping[];
-};
-
-type RematchEventPayload = {
-  next?: { id: number; code: string };
-  players?: RematchMapping[];
-};
-
-type PublicGameSummary = {
-  id: number;
-  code: string;
-  enemy_name: string;
-};
 
 const SESSION_STORAGE_KEY = 'ships-battle/session/v1';
 const RESUMABLE_STEPS: Step[] = ['lobby', 'placing', 'playing'];
@@ -93,6 +66,50 @@ export function useGameState() {
   function triggerLeaderboardRefresh() {
     if (typeof window === 'undefined') return;
     window.dispatchEvent(new CustomEvent('ships-battle:leaderboard:refresh'));
+  }
+
+  function applyBotTurn(payload?: BotTurnPayload | null) {
+    if (!payload) return;
+
+    if (Array.isArray(payload.actions)) {
+      payload.actions.forEach((action) => {
+        if (action.type === 'ability' && action.ability) {
+          const actor = enemyName.value || 'Fleet AI';
+          pushMsg(`${actor} nutzt Fähigkeit ${action.ability}`);
+        }
+      });
+    }
+
+    if (Array.isArray(payload.shots)) {
+      for (const shot of payload.shots) {
+        const x = Number(shot?.x);
+        const y = Number(shot?.y);
+        if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+        const row = myBoard.value[y];
+        if (!row || x < 0 || x >= row.length) continue;
+
+        const current = row[x];
+        if (shot.result === 'hit' || shot.result === 'sunk') {
+          if (current === 0 || current === 1 || current === 3) {
+            row[x] = 4;
+          }
+        } else if (shot.result === 'miss') {
+          row[x] = current === 1 ? 1 : 3;
+        }
+      }
+    }
+
+    if (payload.gameOver) {
+      gameOver.value = true;
+      if (payload.winner) {
+        youWon.value = payload.winner.id === playerId.value;
+        winnerName.value = payload.winner.name;
+      }
+      triggerLeaderboardRefresh();
+    } else {
+      myTurn.value = true;
+      turnKills.value = 0;
+    }
   }
 
   function clearSession() {
@@ -341,6 +358,29 @@ export function useGameState() {
     initSocket();
     await refreshState(data.player_id);
     step.value = 'lobby';
+    rematchState.value = 'idle';
+    rematchError.value = null;
+  }
+
+  async function createBotGame() {
+    const data = await api<{
+      game_code: string;
+      game_id: number;
+      player_id: number;
+      bot_player_id?: number;
+      bot_name?: string;
+    }>(
+      GameController.createBot.post()
+    );
+    gameCode.value = data.game_code;
+    gameId.value = data.game_id;
+    playerId.value = data.player_id;
+    if (data.bot_name) {
+      enemyName.value = data.bot_name;
+    }
+    initSocket();
+    await refreshState(data.player_id);
+    step.value = 'placing';
     rematchState.value = 'idle';
     rematchError.value = null;
   }
@@ -621,6 +661,7 @@ export function useGameState() {
         winner?: { id: number; name: string };
         abilityUsage?: typeof DEFAULT_ABILITY_USAGE;
         turnKills?: number;
+        botTurn?: BotTurnPayload;
       }>(
         GameController.shoot.post(),
         { player_id: playerId.value, x, y }
@@ -654,6 +695,10 @@ export function useGameState() {
           winnerName.value = data.winner.name;
         }
         triggerLeaderboardRefresh();
+      }
+
+      if (data.botTurn) {
+        applyBotTurn(data.botTurn);
       }
     } catch (e: any) {
       const resp: Response | undefined = e?.response;
@@ -696,6 +741,7 @@ export function useGameState() {
         winner?: { id: number; name: string };
         abilityUsage?: typeof DEFAULT_ABILITY_USAGE;
         turnKills?: number;
+        botTurn?: BotTurnPayload;
       }>(
         GameController.useAbility.post(),
         { player_id: playerId.value, type, payload }
@@ -740,6 +786,10 @@ export function useGameState() {
         gameOver.value = true;
         triggerLeaderboardRefresh();
       }
+
+      if (data.botTurn) {
+        applyBotTurn(data.botTurn);
+      }
     } catch (e: any) {
       const resp: Response | undefined = e?.response;
       if (resp) {
@@ -773,7 +823,7 @@ export function useGameState() {
     step, gameCode, gameId, playerId, isReady, myTurn, messages,
     myBoard, enemyBoard, enemyName, enemySunkShips, gameOver, youWon, winnerName,
     abilityUsage, turnKills, rematchState, rematchError,
-    createGame, joinGame, resetForNewGame, readyUp, fire, useAbility, requestRematch, leaveGame,
+    createGame, createBotGame, joinGame, resetForNewGame, readyUp, fire, useAbility, requestRematch, leaveGame,
     gamesAvailable, refreshAvailableGames,
     pushMsg
   };
