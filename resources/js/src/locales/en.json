@@ -38,6 +38,9 @@
   },
   "join": {
     "availableGames": "Available games",
+    "availableGamesHint": "Public lobbies you can join right now.",
+    "availableBadge": "Open seas",
+    "gameCodeLabel": "Code",
     "createdBy": "Created by {name}",
     "cardTitle": "Enter code",
     "cardDesc": "Already have a code? Enter it to jump right in.",
@@ -105,9 +108,37 @@
     "de": "German"
   },
   "lobby": {
-    "code": "Code",
-    "copied": "Code copied to clipboard!",
-    "copyHint": "Copy the code or the URL from the address bar and send it to your opponent!"
+    "code": "Game code",
+    "codeLabel": "Access code",
+    "copied": "Copied! Send it to your opponent.",
+    "copyHint": "You can share the code or simply copy the link to the lobby.",
+    "inviteTitle": "Invite your opponent",
+    "inviteDescription": "Share the code below so your opponent can join the lobby. Once they enter, the battle will begin.",
+    "shareLabel": "Lobby access",
+    "copyButtonLabel": "Copy code",
+    "copiedButtonLabel": "Copied",
+    "copyLinkLabel": "Copy link",
+    "shareButtonLabel": "Share link",
+    "linkCopied": "Link copied",
+    "waitingLabel": "Waiting for opponent",
+    "waitingFooter": "We will start the match as soon as your opponent docks in.",
+    "waitingReadyLabel": "Opponent confirmed",
+    "readyTitle": "Preparing the battlefield…",
+    "readyDescription": "Both crews are ready. We are aligning the ships and will launch the match in a moment.",
+    "readyFooter": "All ships aligned – the battle is about to start!",
+    "privateMatchBadge": "Private match",
+    "publicMatchBadge": "Public match",
+    "linkCopyToast": "Lobby link copied to clipboard.",
+    "codeCopyToast": "Game code copied to clipboard.",
+    "tips": {
+      "heading": "Quick tips",
+      "subheading": "Make it easy for your opponent to join.",
+      "copy": "Paste the code into your chat or voice call channel.",
+      "link": "Copy the lobby link if you prefer sharing a single click.",
+      "wait": "Stay in this screen until the opponent is ready."
+    },
+    "shareTitle": "Battle invite",
+    "shareText": "Join my naval battle with code {code}."
   },
   "gameOver": {
     "won": "Victory",

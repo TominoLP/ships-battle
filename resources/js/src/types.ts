@@ -95,13 +95,13 @@ export type RematchMapping = {
 export type RematchResponse = {
 	status: 'waiting' | 'ready';
 	message?: string;
-	game?: { id: number; code: string };
+	game?: { id: number; code: string; public?: boolean };
 	player?: RematchMapping;
 	players?: RematchMapping[];
 };
 
 export type RematchEventPayload = {
-	next?: { id: number; code: string };
+	next?: { id: number; code: string; public?: boolean };
 	players?: RematchMapping[];
 };
 

@@ -23,6 +23,7 @@ export function useGameState() {
   const enemyBoard = ref<number[][]>(createEmptyBoard());
   const enemySunkShips = ref<number[]>([]);
   const enemyName = ref('');
+  const isPublicGame = ref(false);
 
   const gameOver = ref(false);
   const youWon = ref<boolean | null>(null);
@@ -253,7 +254,7 @@ export function useGameState() {
           player?: Array<{ x: number; y: number; result: string }>;
           enemy?: Array<{ x: number; y: number; result: string }>;
         };
-        game?: { id: number; code: string; status: string; winner_player_id: number | null } | null;
+        game?: { id: number; code: string; status: string; public?: boolean; winner_player_id: number | null } | null;
         winner?: { id: number; name: string } | null;
       }>(GameController.state.get(id));
 
@@ -276,6 +277,7 @@ export function useGameState() {
         if (!gameCode.value) {
           gameCode.value = data.game.code ?? '';
         }
+        isPublicGame.value = Boolean(data.game.public);
         const status = data.game.status;
         const playerReady = data?.player?.isReady ?? false;
         if (status === 'completed') {
@@ -355,6 +357,7 @@ export function useGameState() {
     gameCode.value = data.game_code;
     gameId.value = data.game_id;
     playerId.value = data.player_id;
+    isPublicGame.value = Boolean(options?.public);
     initSocket();
     await refreshState(data.player_id);
     step.value = 'lobby';
@@ -375,6 +378,7 @@ export function useGameState() {
     gameCode.value = data.game_code;
     gameId.value = data.game_id;
     playerId.value = data.player_id;
+    isPublicGame.value = false;
     if (data.bot_name) {
       enemyName.value = data.bot_name;
     }
@@ -392,6 +396,7 @@ export function useGameState() {
     );
     gameId.value = data.game_id;
     playerId.value = data.player_id;
+    // we rely on refreshState to update isPublicGame based on server response
     initSocket();
     await refreshState(data.player_id);
     step.value = 'placing';
@@ -440,11 +445,12 @@ export function useGameState() {
     gameCode.value = '';
     gameId.value = null;
     playerId.value = null;
+    isPublicGame.value = false;
     clearSession();
     await refreshAvailableGames();
   }
 
-  function applyRematch(nextGame: { id: number; code: string }, mapping: RematchMapping) {
+  function applyRematch(nextGame: { id: number; code: string; public?: boolean }, mapping: RematchMapping) {
     if (!nextGame?.id || !nextGame?.code || !mapping?.new_player_id) {
       return;
     }
@@ -476,6 +482,7 @@ export function useGameState() {
     playerId.value = mapping.new_player_id;
     myTurn.value = Boolean(mapping.is_turn);
     isReady.value = false;
+    isPublicGame.value = Boolean(nextGame.public);
     step.value = 'placing';
 
     pushMsg('Rematch gestartet – neues Spiel bereit');
@@ -825,6 +832,7 @@ export function useGameState() {
     abilityUsage, turnKills, rematchState, rematchError,
     createGame, createBotGame, joinGame, resetForNewGame, readyUp, fire, useAbility, requestRematch, leaveGame,
     gamesAvailable, refreshAvailableGames,
+    isPublicGame,
     pushMsg
   };
 }

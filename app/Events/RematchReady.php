@@ -40,6 +40,7 @@ class RematchReady implements ShouldBroadcastNow
             'next' => [
                 'id' => $this->nextGame->id,
                 'code' => $this->nextGame->code,
+                'public' => (bool) $this->nextGame->public,
             ],
             'players' => $this->players,
         ];

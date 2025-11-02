@@ -38,6 +38,9 @@
   },
   "join": {
     "availableGames": "Verfügbare Spiele",
+    "availableGamesHint": "Öffentliche Lobbys, denen du jetzt beitreten kannst.",
+    "availableBadge": "Offenes Meer",
+    "gameCodeLabel": "Code",
     "createdBy": "Erstellt von {name}",
     "cardTitle": "Code eingeben",
     "cardDesc": "Du hast bereits einen Code? Eingeben und direkt loslegen.",
@@ -105,9 +108,37 @@
     "de": "Deutsch"
   },
   "lobby": {
-    "code": "Code",
-    "copied": "Code in die Zwischenablage kopiert!",
-    "copyHint": "Kopiere den Code oder den Link aus der Adressleiste und sende ihn deinem Gegner!"
+    "code": "Spielcode",
+    "codeLabel": "Zugangscode",
+    "copied": "Kopiert! Teile ihn mit deinem Gegner.",
+    "copyHint": "Du kannst den Code teilen oder einfach den Lobby-Link kopieren.",
+    "inviteTitle": "Lade deinen Gegner ein",
+    "inviteDescription": "Teile den Code unten, damit dein Gegner der Lobby beitreten kann. Sobald er da ist, beginnt die Schlacht.",
+    "shareLabel": "Zugang zur Lobby",
+    "copyButtonLabel": "Code kopieren",
+    "copiedButtonLabel": "Kopiert",
+    "copyLinkLabel": "Link kopieren",
+    "shareButtonLabel": "Link teilen",
+    "linkCopied": "Link kopiert",
+    "waitingLabel": "Warte auf Gegner",
+    "waitingFooter": "Sobald dein Gegner anlegt, startet das Match.",
+    "waitingReadyLabel": "Gegner bestätigt",
+    "readyTitle": "Das Schlachtfeld wird vorbereitet …",
+    "readyDescription": "Beide Crews sind bereit. Wir richten die Flotten aus und starten das Match in wenigen Augenblicken.",
+    "readyFooter": "Alle Schiffe ausgerichtet – gleich geht es los!",
+    "privateMatchBadge": "Privates Match",
+    "publicMatchBadge": "Öffentliches Match",
+    "linkCopyToast": "Lobby-Link in die Zwischenablage kopiert.",
+    "codeCopyToast": "Spielcode in die Zwischenablage kopiert.",
+    "tips": {
+      "heading": "Schnelle Tipps",
+      "subheading": "Mach es deinem Gegner leicht beizutreten.",
+      "copy": "Füge den Code in euren Chat oder Sprachkanal ein.",
+      "link": "Kopiere den Lobby-Link, wenn du einen Klick teilen möchtest.",
+      "wait": "Bleib auf diesem Bildschirm, bis dein Gegner bereit ist."
+    },
+    "shareTitle": "Schlacht-Einladung",
+    "shareText": "Tritt meinem Seegefecht mit dem Code {code} bei."
   },
   "gameOver": {
     "won": "Gewonnen",
@@ -238,5 +269,3 @@
     "pointsAtThreshold": "+{points} Punkte bei {threshold}"
   }
 }
-
-

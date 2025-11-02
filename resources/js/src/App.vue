@@ -215,6 +215,7 @@ async function handleJoinGame(payload: { code: string; onSuccess: () => void; on
     if (gs.gameCode !== payload.code) {
       gs.gameCode = payload.code;
     }
+    gs.isPublicGame = false;
     await gs.joinGame();
     payload.onSuccess();
   } catch (err) {
@@ -223,6 +224,23 @@ async function handleJoinGame(payload: { code: string; onSuccess: () => void; on
       t('errors.codeInvalidOrMissing')
     );
     payload.onError(message);
+  }
+}
+
+async function joinPublicGame(code: string) {
+  try {
+    gs.isPublicGame = true;
+    if (gs.gameCode !== code) {
+      gs.gameCode = code;
+    }
+    await gs.joinGame();
+  } catch (err) {
+    gs.isPublicGame = false;
+    const message = await extractApiMessage(
+      err,
+      t('errors.codeInvalidOrMissing')
+    );
+    gs.pushMsg(message);
   }
 }
 
@@ -651,32 +669,50 @@ async function onEnemyCellClick(x: number, y: number) {
               />
             </div>
             <LeaderboardPanel :userName="accountName"/>
-            <div v-if="gs.gamesAvailable.length != 0" class="rounded-xl border border-slate-700 bg-slate-900/80 p-6 shadow-xl">
-              <h2 class="mb-4 text-lg font-semibold text-slate-200">{{ t('join.availableGames') }}</h2>
-              <div v-for="game in gs.gamesAvailable" :key="game.code">
-                <div
-                  class="mb-3 flex items-center justify-between rounded-lg border border-slate-600 bg-slate-800/70 px-4 py-3"
-                >
-                  <div>
-                    <span class="font-mono font-semibold text-slate-200">{{ game.code }}</span>
-                    <span class="ml-2 text-sm text-slate-400">{{ t('join.createdBy', { name: game.enemy_name }) }}</span>
-                  </div>
-                  <button
-                    class="rounded-lg bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-500"
-                    @click="gs.gameCode = game.code; gs.joinGame()"
-                  >
-                    {{ t('actions.join') }}
-                  </button>
+            <div v-if="gs.gamesAvailable.length != 0" class="rounded-2xl border border-slate-700/70 bg-slate-900/80 p-6 shadow-xl space-y-5">
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <h2 class="text-lg font-semibold text-slate-100">{{ t('join.availableGames') }}</h2>
+                  <p class="text-sm text-slate-400">{{ t('join.availableGamesHint') }}</p>
                 </div>
+                <span class="inline-flex items-center gap-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-200">
+                  <i class="fa-solid fa-compass" />
+                  {{ t('join.availableBadge') }}
+                </span>
               </div>
-              
+              <div class="grid gap-3 sm:grid-cols-2">
+                <article
+                  v-for="game in gs.gamesAvailable"
+                  :key="game.code"
+                  class="flex flex-col gap-3 rounded-xl border border-slate-700/60 bg-slate-900/70 p-4 transition hover:border-blue-500/50 hover:bg-slate-800/70"
+                >
+                  <header class="flex items-center justify-between gap-3">
+                    <div>
+                      <p class="text-xs uppercase tracking-widest text-slate-500">{{ t('join.gameCodeLabel') }}</p>
+                      <span class="font-mono text-lg font-semibold text-slate-100 tracking-[0.3em]">
+                        {{ game.code }}
+                      </span>
+                    </div>
+                    <button
+                      class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-500"
+                      @click="joinPublicGame(game.code)"
+                    >
+                      <i class="fa-solid fa-right-to-bracket" />
+                      <span>{{ t('actions.join') }}</span>
+                    </button>
+                  </header>
+                  <p class="text-xs text-slate-400">
+                    {{ t('join.createdBy', { name: game.enemy_name }) }}
+                  </p>
+                </article>
+              </div>
             </div>
           </div>
 
           <!-- LOBBY -->
-          <div v-else-if="gs.step === 'lobby'" class="mx-auto max-w-xl">
+          <div v-else-if="gs.step === 'lobby'" class="mx-auto max-w-3xl">
             <div class="rounded-xl border border-slate-700 bg-slate-900/80 p-6 shadow-xl">
-              <LobbyPanel :gameCode="gs.gameCode" :isReady="gs.isReady" />
+              <LobbyPanel :gameCode="gs.gameCode" :isReady="gs.isReady" :isPublic="gs.isPublicGame" />
             </div>
           </div>
 

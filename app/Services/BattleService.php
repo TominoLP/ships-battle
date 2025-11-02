@@ -291,6 +291,7 @@ class BattleService
                 'id' => $game->id,
                 'code' => $game->code,
                 'status' => $game->status,
+                'public' => (bool) $game->public,
                 'winner_player_id' => $game->winner_player_id,
             ] : null,
             'winner' => $winnerData,
